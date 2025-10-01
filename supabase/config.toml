@@ -1,0 +1,4 @@
+project_id = "xrlqxncccdrjlfhbqcli"
+
+[functions.chat-websocket]
+verify_jwt = false
