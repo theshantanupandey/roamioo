@@ -131,10 +131,7 @@ const NewTrip = () => {
         currency: data.currency,
         max_participants: data.maxParticipants,
         user_id: userId,
-        image_url: imageUrl,
-        path_id: pathId,
-        path_type: pathType,
-        path_metadata: pathMetadata
+        image_url: imageUrl
       };
       console.log("Trip insert payload:", payload);
 
@@ -180,18 +177,12 @@ const NewTrip = () => {
       // Create group chat if requested
       if (data.createGroupChat && data.companions.length > 0) {
         try {
-          const groupChat = await GroupChatService.createGroupChat({
+          await GroupChatService.createGroupChat({
             name: `${data.title} Trip Chat`,
             description: `Group chat for the trip to ${data.destination}`,
             createdBy: userId,
             participantIds: data.companions.map(c => c.id),
           });
-
-          // Update the trip with the new chat_id
-          await supabase
-            .from('trips')
-            .update({ chat_id: groupChat.id })
-            .eq('id', trip.id);
 
           toast({
             title: "Group Chat Created",

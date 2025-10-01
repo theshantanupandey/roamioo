@@ -33,6 +33,7 @@ interface Trip {
   path_id?: string;
   path_type?: 'none' | 'manual' | 'ai_generated' | 'existing';
   path_metadata?: any;
+  user_id?: string;
 }
 interface TripCardProps {
   trip: Trip;

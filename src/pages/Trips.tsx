@@ -197,7 +197,7 @@ const Trips = () => {
           onDelete={handleDeleteTrip}
           showPost={!!user && trip.user_id === user.id && trip.status !== 'draft'}
           onPost={handlePostTrip}
-          showSharePath={!!user && trip.user_id === user.id && trip.path_id}
+          showSharePath={false}
           onSharePath={handleSharePath}
         />
       ))}

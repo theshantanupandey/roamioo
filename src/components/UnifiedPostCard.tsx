@@ -47,9 +47,6 @@ interface Trip {
   budget?: number;
   currency?: string;
   user_id: string;
-  path_id?: string;
-  path_type?: 'none' | 'manual' | 'ai_generated' | 'existing';
-  path_metadata?: any;
 }
 
 interface Path {

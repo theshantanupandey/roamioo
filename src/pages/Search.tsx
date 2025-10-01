@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
+import { ExploreView } from '@/components/ExploreView';
 
 interface UserProfile {
   id: string;
@@ -318,18 +319,8 @@ const Search = () => {
           )}
         </>
       ) : (
-        // Explore View - Show empty state
-        <>
-          <h1 className="text-2xl font-bold mb-4">Explore</h1>
-          <div className="text-center py-20">
-            <SearchIcon className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-lg font-medium mb-2">Not enough content to explore yet</h3>
-            <p className="text-muted-foreground mb-6">Start following users and creating posts to see content here</p>
-            <Button onClick={activateSearch} className="bg-[#95C11F] text-black hover:bg-[#7a9e19]">
-              Search Users
-            </Button>
-          </div>
-        </>
+        // Explore View - Show popular posts
+        <ExploreView />
       )}
     </div>
   );
