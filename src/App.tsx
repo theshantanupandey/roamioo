@@ -48,6 +48,7 @@ import BookingTrains from "./pages/BookingTrains";
 import BookingHotels from "./pages/BookingHotels";
 import AdventureSports from "./pages/AdventureSports";
 import PlaceDetailsPage from "./pages/PlaceDetailsPage";
+import PostDetail from "./pages/PostDetail";
 
 const queryClient = new QueryClient();
 
@@ -326,6 +327,20 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <AdventureSports />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/places/:id" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <PlaceDetailsPage />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/post/:postId" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <PostDetail />
                   </AppLayout>
                 </ProtectedRoute>
               } />

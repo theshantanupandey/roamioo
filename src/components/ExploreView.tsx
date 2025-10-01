@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { UnifiedPostCard } from '@/components/UnifiedPostCard';
-import { Loader2, TrendingUp } from 'lucide-react';
+import { Loader2, TrendingUp, Play } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import { AspectRatio } from '@/components/ui/aspect-ratio';
 
 interface Post {
   id: string;
@@ -29,6 +30,7 @@ export const ExploreView = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchPopularPosts();
@@ -63,30 +65,22 @@ export const ExploreView = () => {
     }
   };
 
-  const handleLike = async (postId: string) => {
-    if (!user) return;
-    
-    try {
-      const { error } = await supabase
-        .from('post_likes')
-        .insert({ post_id: postId, user_id: user.id });
-      
-      if (!error) {
-        fetchPopularPosts();
-      }
-    } catch (error) {
-      console.error('Error liking post:', error);
+  const handlePostClick = (postId: string) => {
+    navigate(`/post/${postId}`);
+  };
+
+  const getPostThumbnail = (post: Post) => {
+    if (post.video_url) {
+      return post.video_url;
     }
+    if (post.image_urls && post.image_urls.length > 0) {
+      return post.image_urls[0];
+    }
+    return null;
   };
 
-  const handleComment = (postId: string) => {
-    // Navigate to post detail or open comments
-    console.log('Comment on post:', postId);
-  };
-
-  const handleShare = (postId: string) => {
-    // Handle sharing
-    console.log('Share post:', postId);
+  const isVideoPost = (post: Post) => {
+    return !!post.video_url;
   };
 
   if (loading) {
@@ -111,19 +105,65 @@ export const ExploreView = () => {
     <div className="space-y-4">
       <div className="flex items-center gap-2 mb-4">
         <TrendingUp className="h-5 w-5 text-primary" />
-        <h2 className="text-xl font-bold">Popular Posts</h2>
+        <h2 className="text-xl font-bold">Explore</h2>
       </div>
       
-      <div className="grid grid-cols-1 gap-4">
-        {posts.map((post) => (
-          <UnifiedPostCard
-            key={post.id}
-            post={post}
-            onLike={handleLike}
-            onComment={handleComment}
-            onShare={handleShare}
-          />
-        ))}
+      {/* Instagram-style 3-column grid */}
+      <div className="grid grid-cols-3 gap-1">
+        {posts.map((post) => {
+          const thumbnail = getPostThumbnail(post);
+          const hasVideo = isVideoPost(post);
+          
+          return (
+            <div
+              key={post.id}
+              className="relative cursor-pointer group overflow-hidden"
+              onClick={() => handlePostClick(post.id)}
+            >
+              <AspectRatio ratio={1}>
+                {thumbnail ? (
+                  <>
+                    {hasVideo ? (
+                      <div className="relative w-full h-full">
+                        <video
+                          src={thumbnail}
+                          className="w-full h-full object-cover"
+                          muted
+                          playsInline
+                        />
+                        <div className="absolute top-2 right-2 bg-black/60 rounded-full p-1">
+                          <Play className="h-4 w-4 text-white fill-white" />
+                        </div>
+                      </div>
+                    ) : (
+                      <img
+                        src={thumbnail}
+                        alt="Post"
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                    
+                    {/* Hover overlay with stats */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-4 text-white">
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold">{post.likes_count}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="font-semibold">{post.comments_count}</span>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div className="w-full h-full bg-muted flex items-center justify-center">
+                    <p className="text-xs text-muted-foreground text-center p-2 line-clamp-3">
+                      {post.content}
+                    </p>
+                  </div>
+                )}
+              </AspectRatio>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
