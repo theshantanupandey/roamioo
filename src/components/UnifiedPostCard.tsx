@@ -47,6 +47,7 @@ interface Trip {
   budget?: number;
   currency?: string;
   user_id: string;
+  path_id?: string;
 }
 
 interface Path {

@@ -1238,6 +1238,7 @@ export type Database = {
           id: string
           image_url: string | null
           max_participants: number | null
+          path_id: string | null
           privacy_level: string | null
           start_date: string
           status: string | null
@@ -1255,6 +1256,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           max_participants?: number | null
+          path_id?: string | null
           privacy_level?: string | null
           start_date: string
           status?: string | null
@@ -1272,6 +1274,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           max_participants?: number | null
+          path_id?: string | null
           privacy_level?: string | null
           start_date?: string
           status?: string | null
@@ -1280,6 +1283,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "trips_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "travel_paths"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "trips_user_id_fkey"
             columns: ["user_id"]
