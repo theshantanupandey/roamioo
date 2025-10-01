@@ -232,6 +232,65 @@ export type Database = {
         }
         Relationships: []
       }
+      group_chat_participants: {
+        Row: {
+          chat_id: string
+          id: string
+          joined_at: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          chat_id: string
+          id?: string
+          joined_at?: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          chat_id?: string
+          id?: string
+          joined_at?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_chat_participants_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "group_chats"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_chats: {
+        Row: {
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       journal_entries: {
         Row: {
           comments_count: number | null
@@ -316,6 +375,7 @@ export type Database = {
       }
       messages: {
         Row: {
+          chat_id: string | null
           content: string
           created_at: string
           file_url: string | null
@@ -327,6 +387,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          chat_id?: string | null
           content: string
           created_at?: string
           file_url?: string | null
@@ -338,6 +399,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          chat_id?: string | null
           content?: string
           created_at?: string
           file_url?: string | null
@@ -348,7 +410,15 @@ export type Database = {
           sender_id?: string
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "messages_chat_id_fkey"
+            columns: ["chat_id"]
+            isOneToOne: false
+            referencedRelation: "group_chats"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       password_reset_tokens: {
         Row: {
@@ -1658,6 +1728,10 @@ export type Database = {
       get_or_create_dm_room: {
         Args: { user1_id: string; user2_id: string }
         Returns: string
+      }
+      is_group_chat_member: {
+        Args: { p_chat_id: string; p_user_id: string }
+        Returns: boolean
       }
       is_trip_owner: {
         Args: { p_trip_id: string }
