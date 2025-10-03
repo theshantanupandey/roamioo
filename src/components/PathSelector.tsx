@@ -34,6 +34,7 @@ export interface PathStop {
   name: string;
   location: string;
   description: string;
+  image?: string;
   day: number;
   estimated_time?: string;
   latitude?: number;
@@ -548,6 +549,13 @@ export const PathSelector: React.FC<PathSelectorProps> = ({
                           updateManualStop(stop.id, { description: e.target.value })
                         }
                         rows={2}
+                      />
+                      <Input
+                        placeholder="Estimated time (e.g., 2 hours)"
+                        value={stop.estimated_time || ''}
+                        onChange={(e) => 
+                          updateManualStop(stop.id, { estimated_time: e.target.value })
+                        }
                       />
                     </div>
                   </div>

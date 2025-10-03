@@ -33,6 +33,9 @@ const CreatePath = () => {
     description: string;
     image: string;
     day: number;
+    estimated_time?: string;
+    latitude?: number;
+    longitude?: number;
   }[]>([]);
 
   // Handle file upload from device
@@ -475,6 +478,15 @@ const CreatePath = () => {
                         value={stop.description}
                         onChange={(e) => updateStop(stop.id, 'description', e.target.value)}
                         required
+                      />
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label>Estimated Time</Label>
+                      <Input
+                        placeholder="e.g., 2 hours"
+                        value={stop.estimated_time || ''}
+                        onChange={(e) => updateStop(stop.id, 'estimated_time', e.target.value)}
                       />
                     </div>
                   </div>
