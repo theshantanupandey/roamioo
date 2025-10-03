@@ -65,6 +65,25 @@ export const TripJoinButton: React.FC<TripJoinButtonProps> = ({
 
     setLoading(true);
     try {
+      // Check if a request already exists
+      const { data: existingRequest } = await supabase
+        .from('trip_join_requests')
+        .select('id')
+        .eq('trip_id', tripId)
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingRequest) {
+        toast({
+          title: "Request already sent",
+          description: "You have already sent a request to join this trip.",
+        });
+        setRequestSent(true);
+        setRequestId(existingRequest.id);
+        setLoading(false);
+        return;
+      }
+
       const { error, data } = await supabase
         .from('trip_join_requests')
         .insert({
@@ -87,7 +106,7 @@ export const TripJoinButton: React.FC<TripJoinButtonProps> = ({
       console.error('Error sending join request:', error);
       toast({
         title: "Error",
-        description: "Failed to send join request. Please try again.",
+        description: error.message || "Failed to send join request. Please try again.",
         variant: "destructive"
       });
     } finally {

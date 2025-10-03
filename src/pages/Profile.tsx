@@ -317,30 +317,28 @@ export default function Profile() {
       }
       
       const { data: pathsData, error: pathsError } = await supabase
-        .from('user_followed_paths')
+        .from('travel_paths')
         .select(`
           id,
-          path:path_id (
-            id,
-            title,
-            image_url,
-            waypoints:path_waypoints(count)
-          )
+          title,
+          image_url,
+          description,
+          estimated_duration,
+          difficulty_level,
+          path_waypoints(count)
         `)
-        .eq('user_id', user.id)
-        .limit(2);
+        .eq('created_by', profileUserId)
+        .order('created_at', { ascending: false })
+        .limit(20);
         
       if (!pathsError && pathsData) {
-        const formattedPaths = pathsData.map(item => {
-          const path = item.path as any;
-          return {
-            id: path.id,
-            title: path.title || 'Unnamed Path',
-            image_url: path.image_url || '',
-            location: '',
-            stops: path.waypoints || 0
-          };
-        });
+        const formattedPaths = pathsData.map(path => ({
+          id: path.id,
+          title: path.title || 'Unnamed Path',
+          image_url: path.image_url || '/placeholder.svg',
+          location: path.description || '',
+          stops: path.path_waypoints?.[0]?.count || 0
+        }));
         
         setSavedPaths(formattedPaths);
       }

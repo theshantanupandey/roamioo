@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { Route, Compass, MapPin, Store, Utensils, Camera, BookOpen, Plus, Share } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface PathStop {
   id: string;
@@ -34,16 +36,100 @@ interface TravelPath {
   description: string;
   stops: PathStop[];
   tags: string[];
+  createdBy?: string; // Add this field
 }
 
 const FollowPath = () => {
   const [activePathId, setActivePathId] = useState<string | null>(null);
   const [activeDayFilter, setActiveDayFilter] = useState<number | null>(null);
+  const [travelPaths, setTravelPaths] = useState<TravelPath[]>([]);
+  const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  // Empty array for travel paths - no dummy data
-  const travelPaths: TravelPath[] = [];
+  useEffect(() => {
+    fetchTravelPaths();
+  }, [user]);
+
+  const fetchTravelPaths = async () => {
+    if (!user) return;
+    
+    setLoading(true);
+    try {
+      const { data: paths, error } = await supabase
+        .from('travel_paths')
+        .select(`
+          id,
+          title,
+          description,
+          image_url,
+          estimated_duration,
+          difficulty_level,
+          created_by,
+          created_at,
+          users!travel_paths_created_by_fkey (
+            id,
+            username,
+            first_name,
+            last_name,
+            profile_image_url
+          ),
+          path_waypoints (
+            id,
+            title,
+            description,
+            order_index,
+            estimated_time,
+            latitude,
+            longitude
+          )
+        `)
+        .eq('is_public', true)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      const formattedPaths: TravelPath[] = (paths || []).map(path => ({
+        id: path.id,
+        title: path.title,
+        destination: path.description || '',
+        duration: path.estimated_duration || '',
+        image: path.image_url || '/placeholder.svg',
+        description: path.description || '',
+        influencer: {
+          name: path.users?.first_name && path.users?.last_name 
+            ? `${path.users.first_name} ${path.users.last_name}`
+            : path.users?.username || 'Unknown',
+          username: path.users?.username || '',
+          avatar: path.users?.profile_image_url || '/placeholder.svg',
+          followers: '0'
+        },
+        createdBy: path.created_by, // Add this for filtering
+        stops: (path.path_waypoints || []).map((wp: any) => ({
+          id: wp.id,
+          type: 'attraction' as const,
+          name: wp.title,
+          location: `${wp.latitude}, ${wp.longitude}`,
+          description: wp.description || '',
+          image: '/placeholder.svg',
+          day: 1,
+        })),
+        tags: []
+      }));
+
+      setTravelPaths(formattedPaths);
+    } catch (error) {
+      console.error('Error fetching travel paths:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to load travel paths',
+        variant: 'destructive'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getSelectedPath = () => {
     return travelPaths.find(path => path.id === activePathId);
@@ -129,19 +215,59 @@ const FollowPath = () => {
             </TabsList>
             
             <TabsContent value="popular" className="space-y-4">
-              <div className="text-center py-10">
-                <Route className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
-                <h3 className="font-medium text-lg mb-2">No travel paths yet</h3>
-                <p className="text-muted-foreground mb-4">
-                  Travel paths from influencers will appear here once they start sharing their journeys.
-                </p>
-                <Button variant="outline" asChild>
-                  <div onClick={() => navigate('/create-path')}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Your First Path
-                  </div>
-                </Button>
-              </div>
+              {loading ? (
+                <div className="space-y-4">
+                  {[1, 2, 3].map(i => (
+                    <Card key={i} className="animate-pulse">
+                      <div className="h-48 bg-muted" />
+                      <CardContent className="p-4">
+                        <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+                        <div className="h-3 bg-muted rounded w-1/2" />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : travelPaths.length === 0 ? (
+                <div className="text-center py-10">
+                  <Route className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+                  <h3 className="font-medium text-lg mb-2">No travel paths yet</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Discover amazing travel paths shared by the community.
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {travelPaths.map(path => (
+                    <Card key={path.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleFollow(path)}>
+                      <div className="relative h-48 overflow-hidden rounded-t-lg">
+                        <img src={path.image} alt={path.title} className="w-full h-full object-cover" />
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                          <h3 className="text-white font-bold text-lg">{path.title}</h3>
+                          <div className="flex items-center text-white/90 text-sm">
+                            <MapPin className="h-4 w-4 mr-1" />
+                            <span>{path.destination}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <Avatar className="h-8 w-8 mr-2">
+                              <AvatarImage src={path.influencer.avatar} />
+                              <AvatarFallback>{path.influencer.name[0]}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="text-sm font-medium">{path.influencer.name}</p>
+                              <p className="text-xs text-muted-foreground">@{path.influencer.username}</p>
+                            </div>
+                          </div>
+                          <Badge variant="outline">{path.stops.length} stops</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
             
             <TabsContent value="new" className="animate-fade-in">
@@ -162,14 +288,58 @@ const FollowPath = () => {
             </TabsContent>
             
             <TabsContent value="my" className="animate-fade-in">
-              <div className="text-center py-10">
-                <div className="p-6 border border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => navigate('/create-path')}>
-                  <Plus className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                  <p className="font-medium mb-2">Create a New Path</p>
-                  <p className="text-sm text-muted-foreground">Share your travels with the community</p>
+              {loading ? (
+                <div className="space-y-4">
+                  {[1, 2].map(i => (
+                    <Card key={i} className="animate-pulse">
+                      <CardContent className="p-4">
+                        <div className="h-16 bg-muted rounded" />
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="p-6 border border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                    onClick={() => navigate('/create-path')}>
+                    <Plus className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                    <p className="font-medium mb-2 text-center">Create a New Path</p>
+                    <p className="text-sm text-muted-foreground text-center">Share your travels with the community</p>
+                  </div>
+                  
+                  {travelPaths.filter(path => path.createdBy === user?.id).length > 0 && (
+                    <div>
+                      <h3 className="font-medium mb-3">Your Created Paths</h3>
+                      {travelPaths
+                        .filter(path => path.createdBy === user?.id)
+                        .map(path => (
+                          <Card key={path.id} className="mb-3 cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleFollow(path)}>
+                            <CardContent className="p-4">
+                              <div className="flex gap-3">
+                                <div className="h-16 w-16 overflow-hidden rounded-md flex-shrink-0">
+                                  <img src={path.image} alt={path.title} className="w-full h-full object-cover" />
+                                </div>
+                                <div className="flex-1">
+                                  <h4 className="font-medium">{path.title}</h4>
+                                  <p className="text-sm text-muted-foreground line-clamp-1">{path.description}</p>
+                                  <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                    <span>{path.stops.length} stops</span>
+                                    {path.duration && (
+                                      <>
+                                        <span>•</span>
+                                        <span>{path.duration}</span>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         ) : (

@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { ExploreView } from '@/components/ExploreView';
+import { useNavigate } from 'react-router-dom';
 
 interface UserProfile {
   id: string;
@@ -27,6 +28,7 @@ const Search = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   // Fetch suggested users from backend
   useEffect(() => {
@@ -150,10 +152,8 @@ const Search = () => {
       setRecentSearches(prev => [targetUser, ...prev].slice(0, 5));
     }
     
-    toast({
-      title: `Viewing ${targetUser.username}'s profile`,
-      description: "User profile page would open here."
-    });
+    // Navigate to user's profile
+    navigate(`/profile/${targetUser.id}`);
   };
 
   const clearRecentSearches = () => {
