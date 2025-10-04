@@ -50,12 +50,23 @@ interface Trip {
   path_id?: string;
 }
 
+interface PathWaypoint {
+  id: string;
+  title: string;
+  description?: string;
+  order_index: number;
+  estimated_time?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
 interface Path {
   id: string;
   title: string;
   description: string;
   difficulty_level?: string;
   estimated_duration?: string;
+  waypoints?: PathWaypoint[];
 }
 
 interface JournalEntry {
@@ -161,9 +172,10 @@ export const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
   }, [post.trip_id, tripProp]);
 
   function getPostType(): 'trip' | 'journal' | 'path' | 'video' | 'normal' {
+    // Path posts take priority over trip posts
+    if (path) return 'path';
     if ((post.trip_id && (tripProp || trip))) return 'trip';
     if (post.journal_entry_id) return 'journal';
-    if (path) return 'path';
     if (post.video_url) return 'video';
     return 'normal';
   }
@@ -275,8 +287,8 @@ export const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
         </AspectRatio>
       )}
 
-      {/* IMAGE */}
-      {postType !== 'video' && post.image_urls && post.image_urls.length > 0 && (
+      {/* IMAGE - Don't show for path posts */}
+      {postType !== 'video' && postType !== 'path' && post.image_urls && post.image_urls.length > 0 && (
         <AspectRatio ratio={4 / 3}>
           <img 
             src={post.image_urls[0]} 
@@ -349,26 +361,81 @@ export const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
         </div>
       )}
 
-      {/* Path Details */}
+      {/* Path Details with Waypoints */}
       {postType === 'path' && path && (
-        <div className="p-4 bg-purple-50/50 border-t">
-          <p className="text-sm text-muted-foreground mb-3">{path.description}</p>
-          
-          <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
-            {path.estimated_duration && (
-              <div className="flex items-center">
-                <Calendar className="h-4 w-4 mr-1" />
-                {path.estimated_duration}
+        <div className="bg-gradient-to-br from-purple-50/80 to-indigo-50/80 dark:from-purple-950/20 dark:to-indigo-950/20 border-t">
+          <div className="p-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-semibold text-lg">{path.title}</h3>
+              <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-300">
+                <Route className="h-3 w-3 mr-1" />
+                Travel Path
+              </Badge>
+            </div>
+            
+            <p className="text-sm text-muted-foreground mb-4">{path.description}</p>
+            
+            <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4 pb-4 border-b">
+              {path.estimated_duration && (
+                <div className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-1" />
+                  <span className="font-medium">{path.estimated_duration}</span>
+                </div>
+              )}
+              {path.difficulty_level && (
+                <Badge variant="secondary" className="text-xs">
+                  {path.difficulty_level}
+                </Badge>
+              )}
+              {path.waypoints && (
+                <div className="flex items-center">
+                  <MapPin className="h-4 w-4 mr-1" />
+                  <span className="font-medium">{path.waypoints.length} stops</span>
+                </div>
+              )}
+            </div>
+
+            {/* Waypoints Display */}
+            {path.waypoints && path.waypoints.length > 0 && (
+              <div className="space-y-3 mb-4">
+                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Journey Stops</h4>
+                <div className="relative pl-6 space-y-4">
+                  {/* Vertical line */}
+                  <div className="absolute left-2 top-2 bottom-2 w-0.5 bg-gradient-to-b from-purple-400 to-indigo-400" />
+                  
+                  {path.waypoints.map((waypoint, index) => (
+                    <div key={waypoint.id} className="relative">
+                      {/* Stop marker */}
+                      <div className="absolute -left-6 top-1 w-4 h-4 rounded-full bg-white border-2 border-purple-500 shadow-sm z-10" />
+                      
+                      <div className="bg-white/60 dark:bg-gray-900/60 rounded-lg p-3 shadow-sm hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-bold text-purple-600 dark:text-purple-400">
+                                Stop {index + 1}
+                              </span>
+                              <h5 className="font-semibold text-sm">{waypoint.title}</h5>
+                            </div>
+                            {waypoint.description && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {waypoint.description}
+                              </p>
+                            )}
+                          </div>
+                          {waypoint.estimated_time && (
+                            <Badge variant="outline" className="text-xs whitespace-nowrap">
+                              {waypoint.estimated_time}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
-            {path.difficulty_level && (
-              <Badge variant="outline" className="text-xs">
-                {path.difficulty_level}
-              </Badge>
-            )}
-          </div>
-          
-          <div className="border-t pt-4">
+            
             <PathFollowButton
               pathId={path.id}
               isFollowing={isFollowingPath}

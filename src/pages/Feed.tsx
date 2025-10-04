@@ -153,8 +153,8 @@ export default function Feed() {
           // Fetch journal data for journal posts
           await fetchJournalData(journalPosts);
           
-          // Fetch path data (if any path posts exist in the future)
-          await fetchPathData([]);
+          // Fetch path data for path posts
+          await fetchPathData(postsWithUserData);
 
         }
       } catch (error) {
@@ -209,7 +209,8 @@ export default function Feed() {
           .from('trip_join_requests')
           .select('trip_id')
           .in('trip_id', tripIds)
-          .eq('user_id', user.id);
+          .eq('user_id', user.id)
+          .eq('status', 'pending');
 
         if (!requestsError && requestsData) {
           const userRequests: {[key: string]: boolean} = {};
@@ -265,12 +266,61 @@ export default function Feed() {
       }
     };
 
-    const fetchPathData = async (pathPosts: Post[]) => {
-      // Placeholder for future path functionality
-      if (pathPosts.length === 0) return;
+    const fetchPathData = async (pathPostsToFetch: Post[]) => {
+      // Get all posts that might have path_id (including ones we haven't categorized yet)
+      const postsWithPathId = posts.filter(p => (p as any).path_id);
       
-      console.log('Path posts to process:', pathPosts.length);
-      // TODO: Implement path data fetching when path posts are created
+      if (postsWithPathId.length === 0) return;
+      
+      const pathIds = postsWithPathId.map(post => (post as any).path_id).filter(Boolean);
+      console.log('Fetching path data for IDs:', pathIds);
+
+      try {
+        const { data: pathsData, error: pathsError } = await supabase
+          .from('travel_paths')
+          .select(`
+            *,
+            path_waypoints (
+              id, title, description, order_index, estimated_time,
+              latitude, longitude
+            )
+          `)
+          .in('id', pathIds);
+
+        if (pathsError) {
+          console.error('Error fetching paths:', pathsError);
+          return;
+        }
+
+        console.log('Paths data fetched:', pathsData?.length || 0);
+        
+        // Transform waypoints for display
+        const transformedPaths = pathsData?.map(path => ({
+          ...path,
+          waypoints: (path.path_waypoints || []).sort((a: any, b: any) => a.order_index - b.order_index)
+        })) || [];
+        
+        setPaths(transformedPaths);
+
+        // Check which paths the user is following
+        if (user) {
+          const { data: followedPathsData, error: followedError } = await supabase
+            .from('user_followed_paths')
+            .select('path_id')
+            .in('path_id', pathIds)
+            .eq('user_id', user.id);
+
+          if (!followedError && followedPathsData) {
+            const followedPaths: {[key: string]: boolean} = {};
+            followedPathsData.forEach(fp => {
+              followedPaths[fp.path_id] = true;
+            });
+            setUserFollowedPaths(followedPaths);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching path data:', error);
+      }
     };
 
     const fetchSuggestions = async () => {
@@ -528,6 +578,16 @@ export default function Feed() {
                 console.log('Journal post data:', {
                   journalFound: !!journalEntry,
                   journalId: post.journal_entry_id
+                });
+              }
+
+              if ((post as any).path_id) {
+                path = paths.find(p => p.id === (post as any).path_id);
+                isFollowingPath = userFollowedPaths[(post as any).path_id] || false;
+                console.log('Path post data:', {
+                  pathFound: !!path,
+                  pathId: (post as any).path_id,
+                  isFollowing: isFollowingPath
                 });
               }
 

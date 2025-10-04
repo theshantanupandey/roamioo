@@ -40,13 +40,14 @@ export class PathService {
       
       const postContent = options.customMessage || defaultMessage;
 
-      // Create the post
+      // Create the post with path_id reference
       const { data: postData, error: postError } = await supabase
         .from('posts')
         .insert({
           content: postContent,
           user_id: userId,
-          image_urls: pathData.image_url ? [pathData.image_url] : [],
+          path_id: pathId,
+          image_urls: [],
           privacy_level: 'public'
         })
         .select()

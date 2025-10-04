@@ -801,6 +801,7 @@ export type Database = {
           journal_entry_id: string | null
           likes_count: number | null
           location: string | null
+          path_id: string | null
           place_id: string | null
           privacy_level: string | null
           trip_id: string | null
@@ -817,6 +818,7 @@ export type Database = {
           journal_entry_id?: string | null
           likes_count?: number | null
           location?: string | null
+          path_id?: string | null
           place_id?: string | null
           privacy_level?: string | null
           trip_id?: string | null
@@ -833,6 +835,7 @@ export type Database = {
           journal_entry_id?: string | null
           likes_count?: number | null
           location?: string | null
+          path_id?: string | null
           place_id?: string | null
           privacy_level?: string | null
           trip_id?: string | null
@@ -846,6 +849,13 @@ export type Database = {
             columns: ["journal_entry_id"]
             isOneToOne: false
             referencedRelation: "journal_entries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "posts_path_id_fkey"
+            columns: ["path_id"]
+            isOneToOne: false
+            referencedRelation: "travel_paths"
             referencedColumns: ["id"]
           },
           {
