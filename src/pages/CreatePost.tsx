@@ -395,19 +395,21 @@ const CreatePost = () => {
           }
         }
 
-        // Add companions to trip_participants table
+        // Add companions to trip_participants table (creator is auto-added by trigger)
         if (selectedCompanions.length > 0) {
           const participantInserts = selectedCompanions.map(companion => ({
             trip_id: tripId,
             user_id: companion.id,
             role: 'participant',
             status: 'accepted',
-            // For companions added via username search, email and name are not needed/used for invitation flow
           }));
 
           const { error: tripParticipantError } = await supabase
             .from('trip_participants')
-            .insert(participantInserts);
+            .upsert(participantInserts, { 
+              onConflict: 'trip_id,user_id',
+              ignoreDuplicates: false 
+            });
 
           if (tripParticipantError) {
             console.error("Error adding trip participants:", tripParticipantError);

@@ -198,31 +198,33 @@ const NewTrip = () => {
         }
       }
 
-      // Invite companions if present (only direct invitations if no group chat or if companions not in group chat)
+      // Add companions as participants (creator is auto-added by trigger)
       if (data.companions.length > 0) {
-        const participantsPromises = data.companions.map(companion => 
-          supabase.from('trip_participants').insert({
-            trip_id: trip.id,
-            user_id: companion.id, 
-            role: 'participant',
-            status: 'accepted',
-            email: null, // Email is no longer used for existing users
-            name: companion.username // Use username for existing users
-          })
-        );
+        const participantInserts = data.companions.map(companion => ({
+          trip_id: trip.id,
+          user_id: companion.id, 
+          role: 'participant',
+          status: 'accepted',
+        }));
         
-        try {
-          await Promise.all(participantsPromises);
-          toast({
-            title: "Companions added",
-            description: `${data.companions.length} companions have been added to your trip.`,
+        const { error: participantsError } = await supabase
+          .from('trip_participants')
+          .upsert(participantInserts, { 
+            onConflict: 'trip_id,user_id',
+            ignoreDuplicates: false 
           });
-        } catch (inviteError) {
-          console.error("Error adding companions:", inviteError);
+        
+        if (participantsError) {
+          console.error("Error adding companions:", participantsError);
           toast({
             title: "Companion Add Error",
             description: "Could not add one or more companions.",
             variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Companions added",
+            description: `${data.companions.length} companions have been added to your trip.`,
           });
         }
       }
