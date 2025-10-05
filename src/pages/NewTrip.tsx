@@ -131,7 +131,8 @@ const NewTrip = () => {
         currency: data.currency,
         max_participants: data.maxParticipants,
         user_id: userId,
-        image_url: imageUrl
+        image_url: imageUrl,
+        path_id: pathId // Link the created/selected path
       };
       console.log("Trip insert payload:", payload);
 

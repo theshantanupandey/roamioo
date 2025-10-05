@@ -11,6 +11,8 @@ import { MapPin, X, Plus, Camera, Store, Utensils, Route, Calendar, Clock, Uploa
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { supabase } from '@/integrations/supabase/client';
+import { uploadFile } from '@/utils/storage';
 
 const CreatePath = () => {
   const navigate = useNavigate();
@@ -138,7 +140,7 @@ const CreatePath = () => {
     setStops(stops.filter(stop => stop.id !== id));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!pathTitle || !destination || !duration || !coverImage) {
@@ -158,12 +160,113 @@ const CreatePath = () => {
       });
       return;
     }
-    
-    toast({
-      title: "Path created!",
-      description: "Your path has been created and shared to your feed.",
-    });
-    navigate('/feed');
+
+    try {
+      // Get authenticated user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        toast({
+          title: "Authentication required",
+          description: "Please log in to create a path",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      // Upload cover image if it's a blob URL
+      let coverImageUrl = coverImage;
+      if (coverImage.startsWith('data:')) {
+        const blob = await fetch(coverImage).then(r => r.blob());
+        const file = new File([blob], `cover-${Date.now()}.jpg`, { type: 'image/jpeg' });
+        const { url, error: uploadError } = await uploadFile(file, {
+          bucket: 'travel-paths',
+          folder: 'covers',
+          userId: user.id
+        });
+        
+        if (uploadError) {
+          throw new Error(`Failed to upload cover image: ${uploadError.message}`);
+        }
+        coverImageUrl = url || coverImage;
+      }
+
+      // Create the travel path
+      const { data: pathData, error: pathError } = await supabase
+        .from('travel_paths')
+        .insert({
+          title: pathTitle,
+          description: pathDescription,
+          created_by: user.id,
+          is_public: true, // Make public by default
+          estimated_duration: `${duration} days`,
+          image_url: coverImageUrl
+        })
+        .select()
+        .single();
+
+      if (pathError) throw pathError;
+
+      // Upload stop images and create waypoints
+      const waypointsToInsert = [];
+      
+      for (let i = 0; i < stops.length; i++) {
+        const stop = stops[i];
+        let stopImageUrl = stop.image;
+        
+        // Upload stop image if it's a blob URL
+        if (stop.image && stop.image.startsWith('data:')) {
+          const blob = await fetch(stop.image).then(r => r.blob());
+          const file = new File([blob], `stop-${Date.now()}-${i}.jpg`, { type: 'image/jpeg' });
+          const { url, error: uploadError } = await uploadFile(file, {
+            bucket: 'travel-paths',
+            folder: 'stops',
+            userId: user.id
+          });
+          
+          if (!uploadError && url) {
+            stopImageUrl = url;
+          }
+        }
+
+        waypointsToInsert.push({
+          path_id: pathData.id,
+          title: stop.name,
+          description: stop.description,
+          order_index: i + 1,
+          estimated_time: stop.estimated_time,
+          latitude: stop.latitude,
+          longitude: stop.longitude
+        });
+      }
+
+      // Insert all waypoints
+      const { error: waypointsError } = await supabase
+        .from('path_waypoints')
+        .insert(waypointsToInsert);
+
+      if (waypointsError) {
+        console.error('Error creating waypoints:', waypointsError);
+        toast({
+          title: "Warning",
+          description: "Path created but some stops couldn't be saved",
+          variant: "destructive"
+        });
+      }
+
+      toast({
+        title: "Path created!",
+        description: "Your path has been created successfully.",
+      });
+      
+      navigate('/follow-path');
+    } catch (error: any) {
+      console.error('Error creating path:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to create path. Please try again.",
+        variant: "destructive"
+      });
+    }
   };
 
   const getStopIcon = (type: string) => {
