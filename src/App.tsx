@@ -46,6 +46,7 @@ import FollowingPage from "./pages/FollowingPage";
 import BookingFlights from "./pages/BookingFlights";
 import BookingTrains from "./pages/BookingTrains";
 import BookingHotels from "./pages/BookingHotels";
+import BookingAdventureActivity from "./pages/BookingAdventureActivity";
 import AdventureSports from "./pages/AdventureSports";
 import PlaceDetailsPage from "./pages/PlaceDetailsPage";
 import PostDetail from "./pages/PostDetail";
@@ -327,6 +328,13 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <AdventureSports />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/booking/adventure/:activityId" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <BookingAdventureActivity />
                   </AppLayout>
                 </ProtectedRoute>
               } />

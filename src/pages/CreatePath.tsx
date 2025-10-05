@@ -206,15 +206,40 @@ const CreatePath = () => {
 
       if (pathError) throw pathError;
 
-      // Create waypoints (no image upload - images are just for UI preview)
-      const waypointsToInsert = stops.map((stop, index) => ({
-        path_id: pathData.id,
-        title: stop.name,
-        description: stop.description,
-        order_index: index + 1,
-        estimated_time: stop.estimated_time || `Day ${stop.day}`,
-        latitude: stop.latitude || null,
-        longitude: stop.longitude || null
+      // Create waypoints with image upload
+      const waypointsToInsert = await Promise.all(stops.map(async (stop, index) => {
+        let stopImageUrl = stop.image;
+        
+        // Upload stop image if it's a blob URL
+        if (stop.image && stop.image.startsWith('data:')) {
+          try {
+            const blob = await fetch(stop.image).then(r => r.blob());
+            const file = new File([blob], `stop-${Date.now()}-${index}.jpg`, { type: 'image/jpeg' });
+            const { url, error: uploadError } = await uploadFile(file, {
+              bucket: 'travel-paths',
+              folder: 'stops',
+              userId: user.id
+            });
+            
+            if (!uploadError && url) {
+              stopImageUrl = url;
+            }
+          } catch (err) {
+            console.error('Error uploading stop image:', err);
+            // Continue with the original image URL if upload fails
+          }
+        }
+        
+        return {
+          path_id: pathData.id,
+          title: stop.name,
+          description: stop.description,
+          order_index: index + 1,
+          estimated_time: stop.estimated_time || `Day ${stop.day}`,
+          latitude: stop.latitude || null,
+          longitude: stop.longitude || null,
+          image_url: stopImageUrl || null
+        };
       }));
 
       // Insert all waypoints

@@ -33,7 +33,7 @@ const Video = () => {
     fetchVideos();
   }, []);
 
-  // Auto-play functionality
+  // Auto-play functionality - Instagram reels style
   useEffect(() => {
     const observerOptions = {
       threshold: 0.5,
@@ -57,9 +57,12 @@ const Video = () => {
             }
           });
           
-          // Play current video
-          videoElement.play().catch(console.error);
-          setPlayingVideo(videoId);
+          // Only auto-play if this video wasn't manually paused
+          // Check if video is paused AND playingVideo state is not this video (manual pause)
+          if (playingVideo !== videoId) {
+            videoElement.play().catch(console.error);
+            setPlayingVideo(videoId);
+          }
           setCurrentVideoIndex(videos.findIndex(v => v.id === videoId));
         } else if (!entry.isIntersecting && videoElement) {
           // Pause video when out of view
@@ -78,7 +81,7 @@ const Video = () => {
     return () => {
       observer.disconnect();
     };
-  }, [videos, playingVideo]);
+  }, [videos]);
 
   const fetchVideos = async () => {
     try {
@@ -232,13 +235,11 @@ const Video = () => {
                 )}
               </div>
 
-              {/* Video overlay on tap for pause */}
-              {playingVideo === video.id && (
-                <div 
-                  className="absolute inset-0 z-10"
-                  onClick={() => toggleVideoPlay(video.id)}
-                />
-              )}
+              {/* Video overlay on tap for pause/play - Instagram reels style */}
+              <div 
+                className="absolute inset-0 z-10"
+                onClick={() => toggleVideoPlay(video.id)}
+              />
             </div>
 
             {/* Right sidebar with actions */}

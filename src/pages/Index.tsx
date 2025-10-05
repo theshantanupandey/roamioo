@@ -484,7 +484,10 @@ const Index = () => {
               </h2>
             </div>
             <div className="divide-y">
-              <div className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+              <div 
+                className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                onClick={() => handleNavigationWithScroll('/translation', travelerToolsRef)}
+              >
                 <div className="flex items-center gap-3">
                   <div className="bg-indigo-500/10 p-2 rounded-full">
                     <Languages className="h-5 w-5 text-indigo-500" />
@@ -494,16 +497,13 @@ const Index = () => {
                     <p className="text-xs text-muted-foreground">Translate conversations on the go</p>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleNavigationWithScroll('/translation', travelerToolsRef)}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </div>
 
-              <div className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+              <div 
+                className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                onClick={() => handleNavigationWithScroll('/discover', travelerToolsRef)}
+              >
                 <div className="flex items-center gap-3">
                   <div className="bg-blue-500/10 p-2 rounded-full">
                     <Compass className="h-5 w-5 text-blue-500" />
@@ -513,16 +513,13 @@ const Index = () => {
                     <p className="text-xs text-muted-foreground">Find popular destinations</p>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleNavigationWithScroll('/discover', travelerToolsRef)}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </div>
 
-              <div className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+              <div 
+                className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                onClick={() => handleNavigationWithScroll('/adventure-sports', travelerToolsRef)}
+              >
                 <div className="flex items-center gap-3">
                   <div className="bg-green-500/10 p-2 rounded-full">
                     <Mountain className="h-5 w-5 text-green-500" />
@@ -532,13 +529,7 @@ const Index = () => {
                     <p className="text-xs text-muted-foreground">Extreme activities & sports</p>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleNavigationWithScroll('/adventure-sports', travelerToolsRef)}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </div>
             </div>
           </div>
@@ -551,7 +542,10 @@ const Index = () => {
               </h2>
             </div>
             <div className="divide-y">
-              <div className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+              <div 
+                className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                onClick={() => handleNavigationWithScroll('/booking/flights', bookingSectionRef)}
+              >
                 <div className="flex items-center gap-3">
                   <div className="bg-blue-500/10 p-2 rounded-full">
                     <Plane className="h-5 w-5 text-blue-500" />
@@ -561,16 +555,13 @@ const Index = () => {
                     <p className="text-xs text-muted-foreground">Find the best flight deals</p>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleNavigationWithScroll('/booking/flights', bookingSectionRef)}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </div>
 
-              <div className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+              <div 
+                className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                onClick={() => handleNavigationWithScroll('/booking/trains', bookingSectionRef)}
+              >
                 <div className="flex items-center gap-3">
                   <div className="bg-purple-500/10 p-2 rounded-full">
                     <Train className="h-5 w-5 text-purple-500" />
@@ -580,16 +571,13 @@ const Index = () => {
                     <p className="text-xs text-muted-foreground">Train tickets & schedules</p>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleNavigationWithScroll('/booking/trains', bookingSectionRef)}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </div>
 
-              <div className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+              <div 
+                className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                onClick={() => handleNavigationWithScroll('/booking/hotels', bookingSectionRef)}
+              >
                 <div className="flex items-center gap-3">
                   <div className="bg-orange-500/10 p-2 rounded-full">
                     <Hotel className="h-5 w-5 text-orange-500" />
@@ -599,13 +587,7 @@ const Index = () => {
                     <p className="text-xs text-muted-foreground">Find accommodation</p>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleNavigationWithScroll('/booking/hotels', bookingSectionRef)}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
               </div>
             </div>
           </div>

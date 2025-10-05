@@ -509,6 +509,7 @@ export type Database = {
           description: string | null
           estimated_time: string | null
           id: string
+          image_url: string | null
           latitude: number | null
           longitude: number | null
           order_index: number
@@ -521,6 +522,7 @@ export type Database = {
           description?: string | null
           estimated_time?: string | null
           id?: string
+          image_url?: string | null
           latitude?: number | null
           longitude?: number | null
           order_index: number
@@ -533,6 +535,7 @@ export type Database = {
           description?: string | null
           estimated_time?: string | null
           id?: string
+          image_url?: string | null
           latitude?: number | null
           longitude?: number | null
           order_index?: number
