@@ -267,8 +267,8 @@ export default function Feed() {
     };
 
     const fetchPathData = async (pathPostsToFetch: Post[]) => {
-      // Get all posts that might have path_id (including ones we haven't categorized yet)
-      const postsWithPathId = posts.filter(p => (p as any).path_id);
+      // Get all posts that have path_id
+      const postsWithPathId = pathPostsToFetch.filter(p => (p as any).path_id);
       
       if (postsWithPathId.length === 0) return;
       

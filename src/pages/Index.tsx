@@ -442,34 +442,7 @@ const Index = () => {
               </Link>
             </div>
             
-            <div className="bg-gradient-to-r from-[#95C11F]/10 to-[#95C11F]/5 rounded-xl p-4 border border-[#95C11F]/20">
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="bg-[#95C11F] p-2 rounded-lg">
-                    <Book className="h-4 w-4 text-black" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-sm">Capture Your Journey</h3>
-                    <p className="text-xs text-muted-foreground">Write about your travel experiences</p>
-                  </div>
-                </div>
-                <Button 
-                  size="sm" 
-                  className="bg-[#95C11F] text-black hover:bg-[#7a9e19]"
-                  onClick={() => handleNavigationWithScroll('/journal/compose', journalRef)}
-                >
-                  <PlusCircle className="h-4 w-4 mr-1" />
-                  Add Entry
-                </Button>
-              </div>
-              <p className="text-xs text-muted-foreground mb-3">
-                Share your travel stories and memories with the community
-              </p>
-              {/* Latest entry preview */}
-              <div className="mt-2">
-                <Journal maxEntries={1} showAllControls={false} />
-              </div>
-            </div>
+            <Journal maxEntries={1} showAllControls={false} />
           </div>
 
           <div className="mt-2">

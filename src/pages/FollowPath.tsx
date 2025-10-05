@@ -211,6 +211,7 @@ const FollowPath = () => {
               <TabsTrigger value="popular">Popular</TabsTrigger>
               <TabsTrigger value="new">New</TabsTrigger>
               <TabsTrigger value="nearby">Nearby</TabsTrigger>
+              <TabsTrigger value="saved">Saved</TabsTrigger>
               <TabsTrigger value="my">My Paths</TabsTrigger>
             </TabsList>
             
@@ -284,6 +285,13 @@ const FollowPath = () => {
                 <Button variant="outline">
                   Enable Location
                 </Button>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="saved" className="animate-fade-in">
+              <div className="text-center py-10">
+                <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground mb-4">Saved paths coming soon!</p>
               </div>
             </TabsContent>
             

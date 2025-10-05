@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
 import { formatDistanceToNow } from 'date-fns';
 import { Heart, MessageSquare, Share, MapPin, Calendar, Users, BookOpen, Route, Play } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { TripJoinButton } from './TripJoinButton';
 import { PathFollowButton } from './PathFollowButton';
@@ -110,6 +111,7 @@ export const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
   onComment
 }) => {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [trip, setTrip] = useState<Trip | undefined>(tripProp);
   const [loadingTrip, setLoadingTrip] = useState(false);
   const [tripPath, setTripPath] = useState<any>(null);
@@ -436,10 +438,43 @@ export const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
               </div>
             )}
             
-            <PathFollowButton
-              pathId={path.id}
-              isFollowing={isFollowingPath}
-            />
+            <div className="flex gap-2">
+              <PathFollowButton
+                pathId={path.id}
+                isFollowing={isFollowingPath}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="flex-1"
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (!user) {
+                    toast({ title: "Please log in to save paths", variant: "destructive" });
+                    return;
+                  }
+                  try {
+                    const { error } = await supabase
+                      .from('user_followed_paths')
+                      .upsert({
+                        user_id: user.id,
+                        path_id: path.id,
+                        status: 'saved'
+                      }, {
+                        onConflict: 'user_id,path_id'
+                      });
+                    if (error) throw error;
+                    toast({ title: "Path saved successfully!" });
+                  } catch (error) {
+                    console.error('Error saving path:', error);
+                    toast({ title: "Failed to save path", variant: "destructive" });
+                  }
+                }}
+              >
+                <BookOpen className="h-4 w-4 mr-2" />
+                Save Path
+              </Button>
+            </div>
           </div>
         </div>
       )}
