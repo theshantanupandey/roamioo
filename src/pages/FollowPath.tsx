@@ -165,11 +165,42 @@ const FollowPath = () => {
     });
   };
 
-  const handleSharePath = () => {
-    toast({
-      title: "Path Shared!",
-      description: "Your travel path has been shared to your feed",
-    });
+  const handleSharePath = async () => {
+    if (!selectedPath || !user) {
+      toast({
+        title: "Error",
+        description: "Please select a path and sign in to share",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('posts')
+        .insert({
+          user_id: user.id,
+          content: `Check out this amazing travel path: ${selectedPath.title}`,
+          path_id: selectedPath.id,
+          privacy_level: 'public'
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast({
+        title: "Path Shared!",
+        description: "Your travel path has been shared to your feed",
+      });
+    } catch (error) {
+      console.error('Error sharing path:', error);
+      toast({
+        title: "Error",
+        description: "Failed to share path to feed",
+        variant: "destructive"
+      });
+    }
   };
 
   const getStopIcon = (type: PathStop['type']) => {

@@ -3,12 +3,13 @@ import React, { useState, useEffect } from 'react';
 import { PageHeader } from '@/components/ui/page-header';
 import Translation, { TranslationHistory } from '@/components/Translation';
 import VoiceTranslation from '@/components/VoiceTranslation';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
 import { Languages, Mic } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { cn } from '@/lib/utils';
 
 const TranslationPage = () => {
   const { user } = useAuth();
@@ -16,6 +17,7 @@ const TranslationPage = () => {
   const { toast } = useToast();
   const [translations, setTranslations] = useState<TranslationHistory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeMode, setActiveMode] = useState<'voice' | 'text'>('voice');
   
   useEffect(() => {
     if (!user) {
@@ -71,34 +73,52 @@ const TranslationPage = () => {
   if (!user) return null;
   
   return (
-    <div className="container mx-auto p-4 max-w-3xl">
-      <PageHeader 
-        heading="Translation" 
-        subheading="Translate between multiple languages with voice input and output"
-        icon={<Languages className="h-6 w-6 text-indigo-500" />}
-      />
+    <div className="container mx-auto pb-32 px-0">
+      <div className="px-4 pt-4">
+        <PageHeader 
+          heading="Translation" 
+          subheading="Translate on-the-go with voice or text"
+          icon={<Languages className="h-6 w-6 text-indigo-500" />}
+        />
+      </div>
       
-      <div className="mt-6">
-        <Tabs defaultValue="voice" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
-            <TabsTrigger value="voice" className="flex items-center gap-2">
-              <Mic className="h-4 w-4" />
-              Voice Translation
-            </TabsTrigger>
-            <TabsTrigger value="text" className="flex items-center gap-2">
-              <Languages className="h-4 w-4" />
-              Text Translation
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="voice">
-            <VoiceTranslation onTranslationSaved={handleTranslationSaved} />
-          </TabsContent>
-          
-          <TabsContent value="text">
-            <Translation translations={translations} isLoading={isLoading} onTranslationSaved={handleTranslationSaved} />
-          </TabsContent>
-        </Tabs>
+      {/* Mobile-optimized mode switcher - Fixed at bottom for thumb access */}
+      <div className="fixed bottom-20 left-0 right-0 z-10 px-4 pb-4 bg-gradient-to-t from-background via-background to-transparent pt-8">
+        <div className="grid grid-cols-2 gap-3 max-w-lg mx-auto">
+          <Button
+            variant={activeMode === 'voice' ? 'default' : 'outline'}
+            size="lg"
+            onClick={() => setActiveMode('voice')}
+            className={cn(
+              "h-16 text-base font-medium rounded-2xl shadow-lg transition-all",
+              activeMode === 'voice' && "shadow-primary/50"
+            )}
+          >
+            <Mic className="h-5 w-5 mr-2" />
+            Voice
+          </Button>
+          <Button
+            variant={activeMode === 'text' ? 'default' : 'outline'}
+            size="lg"
+            onClick={() => setActiveMode('text')}
+            className={cn(
+              "h-16 text-base font-medium rounded-2xl shadow-lg transition-all",
+              activeMode === 'text' && "shadow-primary/50"
+            )}
+          >
+            <Languages className="h-5 w-5 mr-2" />
+            Text
+          </Button>
+        </div>
+      </div>
+      
+      {/* Translation Content */}
+      <div className="mt-4 px-4">
+        {activeMode === 'voice' ? (
+          <VoiceTranslation onTranslationSaved={handleTranslationSaved} />
+        ) : (
+          <Translation translations={translations} isLoading={isLoading} onTranslationSaved={handleTranslationSaved} />
+        )}
       </div>
     </div>
   );

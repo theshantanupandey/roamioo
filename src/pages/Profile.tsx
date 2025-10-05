@@ -232,6 +232,7 @@ export default function Profile() {
       let profileBio = '';
       let profileLocation = '';
       let profileAvatar = '';
+      let postsCount = 0; // Declare at function level
 
       if (user.user_metadata?.first_name || user.user_metadata?.full_name) {
         profileName = user.user_metadata.full_name || 
@@ -259,24 +260,60 @@ export default function Profile() {
           profileAvatar = userData.profile_image_url || '';
         }
 
+        // Fetch posts count first
+        const { count } = await supabase
+          .from('posts')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', profileUserId);
+        postsCount = count || 0;
+
+        // Fetch actual trips count dynamically
+        const { count: actualTripsCount } = await supabase
+          .from('trips')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', profileUserId);
+
+        // Calculate credits based on activity (1 credit per post, 5 per trip, 2 per journal)
+        const creditsFromPosts = (postsCount || 0) * 1;
+        const creditsFromTrips = (actualTripsCount || 0) * 5;
+        const creditsFromJournals = journalEntries.length * 2;
+        const totalCredits = creditsFromPosts + creditsFromTrips + creditsFromJournals;
+
+        // Calculate level based on credits
+        let level = 'Explorer';
+        if (totalCredits >= 100) level = 'Master';
+        else if (totalCredits >= 50) level = 'Expert';
+        else if (totalCredits >= 20) level = 'Adventurer';
+
+        // Get total likes from all posts
+        const { data: postsWithLikes } = await supabase
+          .from('posts')
+          .select('likes_count')
+          .eq('user_id', profileUserId);
+        
+        const totalLikes = postsWithLikes?.reduce((sum, post) => sum + (post.likes_count || 0), 0) || 0;
+
         setUserStats({
-          tripsCompleted: userData.trips_completed || 0,
-          creditsEarned: userData.credits_earned || 0,
-          romioLevel: userData.romio_level || 'Explorer',
-          totalLikesReceived: userData.total_likes_received || 0
+          tripsCompleted: actualTripsCount || 0,
+          creditsEarned: totalCredits,
+          romioLevel: level,
+          totalLikesReceived: totalLikes
         });
       } else {
         profileUsername = user.email?.split('@')[0] || '';
         if (!profileName) {
           profileName = profileUsername;
         }
+        
+        // Fetch posts count if not already fetched
+        const { count } = await supabase
+          .from('posts')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', profileUserId);
+        postsCount = count || 0;
       }
       
-      const { count: postsCount } = await supabase
-        .from('posts')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', profileUserId);
-        
+      // postsCount is now available at this scope
       const { count: followersCount } = await supabase
         .from('user_follows')
         .select('*', { count: 'exact', head: true })
@@ -294,7 +331,7 @@ export default function Profile() {
         location: profileLocation,
         avatar: profileAvatar,
         stats: {
-          posts: postsCount || 0,
+          posts: postsCount,
           followers: followersCount || 0,
           following: followingCount || 0,
         },
