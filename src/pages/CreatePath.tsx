@@ -206,38 +206,16 @@ const CreatePath = () => {
 
       if (pathError) throw pathError;
 
-      // Upload stop images and create waypoints
-      const waypointsToInsert = [];
-      
-      for (let i = 0; i < stops.length; i++) {
-        const stop = stops[i];
-        let stopImageUrl = stop.image;
-        
-        // Upload stop image if it's a blob URL
-        if (stop.image && stop.image.startsWith('data:')) {
-          const blob = await fetch(stop.image).then(r => r.blob());
-          const file = new File([blob], `stop-${Date.now()}-${i}.jpg`, { type: 'image/jpeg' });
-          const { url, error: uploadError } = await uploadFile(file, {
-            bucket: 'travel-paths',
-            folder: 'stops',
-            userId: user.id
-          });
-          
-          if (!uploadError && url) {
-            stopImageUrl = url;
-          }
-        }
-
-        waypointsToInsert.push({
-          path_id: pathData.id,
-          title: stop.name,
-          description: stop.description,
-          order_index: i + 1,
-          estimated_time: stop.estimated_time,
-          latitude: stop.latitude,
-          longitude: stop.longitude
-        });
-      }
+      // Create waypoints (no image upload - images are just for UI preview)
+      const waypointsToInsert = stops.map((stop, index) => ({
+        path_id: pathData.id,
+        title: stop.name,
+        description: stop.description,
+        order_index: index + 1,
+        estimated_time: stop.estimated_time || `Day ${stop.day}`,
+        latitude: stop.latitude || null,
+        longitude: stop.longitude || null
+      }));
 
       // Insert all waypoints
       const { error: waypointsError } = await supabase

@@ -12,36 +12,52 @@ export const GroupChatService = {
     try {
       console.log("Attempting to create group chat with:", { name, description, createdBy, participantIds });
 
-      // Verify authentication
+      // Verify authentication - this is critical for RLS
       const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) {
-        throw new Error("User not authenticated. Please log in again.");
+      if (authError) {
+        console.error("Auth error:", authError);
+        throw new Error(`Authentication error: ${authError.message}`);
+      }
+      
+      if (!user) {
+        throw new Error("User not authenticated. Please log in.");
       }
 
       if (user.id !== createdBy) {
-        throw new Error("Authentication mismatch. Please try again.");
+        console.error("User ID mismatch:", { userId: user.id, createdBy });
+        throw new Error("Authentication mismatch. The creator ID doesn't match the logged-in user.");
       }
 
-      // Create chat and return id only (min payload)
+      console.log("User authenticated successfully:", user.id);
+
+      // Validate inputs
+      if (!name || name.trim().length === 0) {
+        throw new Error("Group chat name is required.");
+      }
+
+      // Create chat - the RLS policy will check that auth.uid() = created_by
       const { data: chatInsert, error: chatInsertErr } = await supabase
         .from('group_chats')
         .insert({
-          name,
-          description,
+          name: name.trim(),
+          description: description?.trim() || null,
           created_by: createdBy,
         })
         .select('id')
         .single();
 
       if (chatInsertErr) {
-        console.error("Supabase Error (group_chats insert): ", chatInsertErr);
-        throw new Error(chatInsertErr.message || "Failed to create group chat entry.");
+        console.error("Supabase Error (group_chats insert):", chatInsertErr);
+        console.error("Error details:", JSON.stringify(chatInsertErr, null, 2));
+        throw new Error(`Failed to create group chat: ${chatInsertErr.message}`);
       }
+      
       if (!chatInsert?.id) {
-        throw new Error("Group chat id not returned by Supabase.");
+        throw new Error("Group chat created but no ID was returned.");
       }
+      
       const chatId = chatInsert.id as string;
-      console.log("Group chat created with ID:", chatId);
+      console.log("Group chat created successfully with ID:", chatId);
 
       // Ensure creator included and unique
       const allParticipantIds = [...new Set([createdBy, ...participantIds])];

@@ -359,9 +359,7 @@ const CreatePost = () => {
             currency: 'INR', // default or ask user if needed
             image_url: imageUrls.length > 0 ? imageUrls[0] : null,
             privacy_level: "public",
-            path_id: pathId,
-            path_type: pathType,
-            path_metadata: pathMetadata
+            path_id: pathId
           })
           .select('id')
           .single();
