@@ -74,12 +74,41 @@ export default function UserFeed() {
       if (userError) throw userError;
       setProfileUser(userData);
 
-      // Fetch user's posts with user data
+      // Fetch user's posts with user data, trips, paths, and journal entries
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
         .select(`
           *,
-          user:users(id, username, first_name, last_name, profile_image_url)
+          user:users(id, username, first_name, last_name, profile_image_url),
+          trips:trip_id(
+            id,
+            title,
+            destination,
+            start_date,
+            end_date,
+            max_participants,
+            budget,
+            currency,
+            user_id,
+            path_id
+          ),
+          travel_paths:path_id(
+            id,
+            title,
+            description,
+            destination,
+            difficulty_level,
+            estimated_duration,
+            path_waypoints(id, title, description, order_index, estimated_time, latitude, longitude, image_url)
+          ),
+          journal_entries:journal_entry_id(
+            id,
+            title,
+            content,
+            location,
+            mood,
+            image_urls
+          )
         `)
         .eq('user_id', userId)
         .order('created_at', { ascending: false });
@@ -87,9 +116,12 @@ export default function UserFeed() {
       if (postsError) throw postsError;
       
       // Transform the data to match our Post interface
-      const transformedPosts = (postsData || []).map(post => ({
+      const transformedPosts = (postsData || []).map((post: any) => ({
         ...post,
-        user: Array.isArray(post.user) ? post.user[0] : post.user
+        user: Array.isArray(post.user) ? post.user[0] : post.user,
+        trip: Array.isArray(post.trips) ? post.trips[0] : post.trips,
+        path: Array.isArray(post.travel_paths) ? post.travel_paths[0] : post.travel_paths,
+        journalEntry: Array.isArray(post.journal_entries) ? post.journal_entries[0] : post.journal_entries
       }));
       
       setPosts(transformedPosts);
@@ -154,10 +186,13 @@ export default function UserFeed() {
       {/* Posts */}
       <div className="space-y-6">
         {posts.length > 0 ? (
-          posts.map(post => (
+          posts.map((post: any) => (
             <UnifiedPostCard
               key={post.id}
               post={post}
+              trip={post.trip}
+              path={post.path}
+              journalEntry={post.journalEntry}
               onProfileClick={(userId) => navigate(`/profile/${userId}`)}
             />
           ))

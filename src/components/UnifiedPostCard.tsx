@@ -265,6 +265,16 @@ export const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
                 <Play className="h-3 w-3" />
               </Badge>
             )}
+            {postType === 'normal' && post.image_urls && post.image_urls.length > 0 && (
+              <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 p-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="2" />
+                  <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" />
+                  <path d="M3 16L8 11L13 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M14 14L17 11L21 15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </Badge>
+            )}
             <PostActions
               postId={post.id}
               postUserId={post.user_id}
@@ -452,43 +462,13 @@ export const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
               </div>
             )}
             
-            <div className="flex gap-2">
+            {/* Only show save button if user is not the creator */}
+            {(!user || (path as any).created_by !== user.id) && (
               <PathFollowButton
                 pathId={path.id}
                 isFollowing={isFollowingPath}
               />
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex-1"
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  if (!user) {
-                    toast({ title: "Please log in to save paths", variant: "destructive" });
-                    return;
-                  }
-                  try {
-                    const { error } = await supabase
-                      .from('user_followed_paths')
-                      .upsert({
-                        user_id: user.id,
-                        path_id: path.id,
-                        status: 'saved'
-                      }, {
-                        onConflict: 'user_id,path_id'
-                      });
-                    if (error) throw error;
-                    toast({ title: "Path saved successfully!" });
-                  } catch (error) {
-                    console.error('Error saving path:', error);
-                    toast({ title: "Failed to save path", variant: "destructive" });
-                  }
-                }}
-              >
-                <BookOpen className="h-4 w-4 mr-2" />
-                Save Path
-              </Button>
-            </div>
+            )}
           </div>
         </div>
       )}

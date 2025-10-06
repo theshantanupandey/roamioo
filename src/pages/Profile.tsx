@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, LogOut, Settings, HelpCircle, MapPin, ChevronRight, Grid, Route, Mail, MessageSquare, Award, Star, Badge as BadgeIcon, Users } from 'lucide-react';
+import { User, LogOut, Settings, HelpCircle, MapPin, ChevronRight, Grid, Route, Mail, MessageSquare, Award, Star, Badge as BadgeIcon, Users, Bookmark } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card } from '@/components/ui/card';
@@ -342,7 +342,7 @@ export default function Profile() {
       
       const { data: postsData, error: postsError } = await supabase
         .from('posts')
-        .select('id, image_urls, likes_count, trip_id, video_url')
+        .select('id, image_urls, likes_count, trip_id, video_url, path_id')
         .eq('user_id', profileUserId)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -353,7 +353,8 @@ export default function Profile() {
         setPosts(postsData);
       }
       
-      const { data: pathsData, error: pathsError } = await supabase
+      // Fetch created paths
+      const { data: createdPathsData, error: createdPathsError } = await supabase
         .from('travel_paths')
         .select(`
           id,
@@ -362,23 +363,68 @@ export default function Profile() {
           description,
           estimated_duration,
           difficulty_level,
+          created_by,
           path_waypoints(count)
         `)
         .eq('created_by', profileUserId)
         .order('created_at', { ascending: false })
         .limit(20);
+      
+      // Fetch saved/followed paths
+      const { data: savedPathsData, error: savedPathsError } = await supabase
+        .from('user_followed_paths')
+        .select(`
+          path_id,
+          travel_paths:path_id(
+            id,
+            title,
+            image_url,
+            description,
+            estimated_duration,
+            difficulty_level,
+            created_by,
+            path_waypoints(count)
+          )
+        `)
+        .eq('user_id', profileUserId)
+        .order('started_at', { ascending: false });
         
-      if (!pathsError && pathsData) {
-        const formattedPaths = pathsData.map(path => ({
-          id: path.id,
-          title: path.title || 'Unnamed Path',
-          image_url: path.image_url || '/placeholder.svg',
-          location: path.description || '',
-          stops: path.path_waypoints?.[0]?.count || 0
-        }));
-        
-        setSavedPaths(formattedPaths);
+      const allPaths: any[] = [];
+      
+      // Add created paths first with type marker
+      if (!createdPathsError && createdPathsData) {
+        createdPathsData.forEach((path: any) => {
+          allPaths.push({
+            id: path.id,
+            title: path.title || 'Unnamed Path',
+            image_url: path.image_url || '/placeholder.svg',
+            location: path.description || '',
+            stops: path.path_waypoints?.[0]?.count || 0,
+            isCreated: true,
+            created_by: path.created_by
+          });
+        });
       }
+      
+      // Add saved paths with type marker
+      if (!savedPathsError && savedPathsData) {
+        savedPathsData.forEach((item: any) => {
+          const path = item.travel_paths;
+          if (path) {
+            allPaths.push({
+              id: path.id,
+              title: path.title || 'Unnamed Path',
+              image_url: path.image_url || '/placeholder.svg',
+              location: path.description || '',
+              stops: path.path_waypoints?.[0]?.count || 0,
+              isCreated: false,
+              created_by: path.created_by
+            });
+          }
+        });
+      }
+      
+      setSavedPaths(allPaths);
         
     } catch (error) {
       console.error('Error fetching profile data:', error);
@@ -520,8 +566,9 @@ export default function Profile() {
     }
   ];
 
-  const generalPosts = posts.filter((post) => !post.trip_id);
-  const tripPosts = posts.filter((post) => post.trip_id);
+  const generalPosts = posts.filter((post: any) => !post.trip_id && !(post as any).path_id);
+  const tripPosts = posts.filter((post: any) => post.trip_id);
+  const pathPosts = posts.filter((post: any) => (post as any).path_id);
 
   return <div className="px-4 pb-28">
       <div className="flex flex-col mt-3">
@@ -773,31 +820,74 @@ export default function Profile() {
         </TabsContent>
 
         <TabsContent value="paths" className="mt-4">
-          {savedPaths.length > 0 ? (
-            <div className="grid grid-cols-1 gap-4">
-              {savedPaths.map(path => (
-                <Card key={path.id} className="p-4">
-                  <div className="flex items-center space-x-4">
-                    <img 
-                      src={path.image_url || '/placeholder.svg'} 
-                      alt={path.title}
-                      className="w-16 h-16 rounded-lg object-cover"
-                    />
-                    <div className="flex-1">
-                      <h3 className="font-semibold">{path.title}</h3>
-                      <p className="text-sm text-muted-foreground">{path.stops} stops</p>
-                    </div>
-                    <Button variant="outline" size="sm">
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
+          {/* Show path posts first */}
+          {pathPosts.length > 0 && (
+            <div className="mb-6">
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Route className="h-4 w-4" />
+                Posted Paths
+              </h3>
+              <div className="grid grid-cols-3 gap-1">
+                {pathPosts.map((post: any) => (
+                  <div 
+                    key={post.id} 
+                    className="relative aspect-square cursor-pointer hover:opacity-80 transition-opacity"
+                    onClick={() => handlePostClick(post.id)}
+                  >
+                    <AspectRatio ratio={1 / 1}>
+                      <img 
+                        src={post.image_urls && post.image_urls.length > 0 ? post.image_urls[0] : '/placeholder.svg'} 
+                        alt="Path Post" 
+                        className="w-full h-full object-cover" 
+                      />
+                      <div className="absolute bottom-2 left-2 text-white text-xs flex items-center">
+                        <Route className="h-3 w-3 mr-1" />
+                        Path
+                      </div>
+                    </AspectRatio>
                   </div>
-                </Card>
-              ))}
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* Saved/Created Paths List */}
+          {savedPaths.length > 0 ? (
+            <div>
+              <h3 className="text-sm font-semibold mb-3 flex items-center gap-2">
+                <Bookmark className="h-4 w-4" />
+                {isOwn ? 'My Paths' : 'Saved Paths'}
+              </h3>
+              <div className="grid grid-cols-1 gap-4">
+                {savedPaths.map((path: any) => (
+                  <Card key={path.id} className="p-4">
+                    <div className="flex items-center space-x-4">
+                      <img 
+                        src={path.image_url || '/placeholder.svg'} 
+                        alt={path.title}
+                        className="w-16 h-16 rounded-lg object-cover"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">{path.title}</h3>
+                          {path.isCreated && (
+                            <Badge variant="secondary" className="text-xs">Created</Badge>
+                          )}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{path.stops} stops</p>
+                      </div>
+                      <Button variant="outline" size="sm">
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-10 text-center text-muted-foreground">
               <Route className="h-10 w-10 mb-2 opacity-20" />
-              <p>No saved paths yet</p>
+              <p>No paths yet</p>
               {isOwn && (
               <Button 
                 className="mt-3 bg-[#BFF627] hover:bg-[#aae120] text-black"

@@ -96,7 +96,7 @@ export const PathFollowButton: React.FC<PathFollowButtonProps> = ({
       ) : (
         <Route className="h-4 w-4 mr-2" />
       )}
-      {loading ? "..." : following ? "Following" : "Follow Path"}
+      {loading ? "..." : following ? "Saved" : "Save Path"}
     </Button>
   );
 };
