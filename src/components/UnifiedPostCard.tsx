@@ -232,6 +232,12 @@ export const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
                     {post.location}
                   </>
                 )}
+                {(post as any).updated_at && new Date((post as any).updated_at).getTime() !== new Date(post.created_at).getTime() && (
+                  <>
+                    <span className="mx-1">•</span>
+                    <span className="text-xs italic">Edited</span>
+                  </>
+                )}
               </div>
             </div>
           </div>

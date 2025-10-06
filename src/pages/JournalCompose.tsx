@@ -16,6 +16,9 @@ const JournalCompose: React.FC = () => {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const searchParams = new URLSearchParams(window.location.search);
+  const entryId = searchParams.get('id');
+  const isEditing = !!entryId;
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -24,10 +27,43 @@ const JournalCompose: React.FC = () => {
   const [postToTwitter, setPostToTwitter] = useState(false);
   const [postToThreads, setPostToThreads] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(isEditing);
+
+  // Load existing entry if editing
+  useEffect(() => {
+    if (isEditing && entryId && user) {
+      const loadEntry = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('journal_entries')
+            .select('*')
+            .eq('id', entryId)
+            .eq('user_id', user.id)
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            setTitle(data.title);
+            setContent(data.content);
+            setIsPrivate(data.is_private);
+            setPublishAsPost(data.is_posted);
+          }
+        } catch (error) {
+          console.error('Error loading entry:', error);
+          toast({ title: 'Error', description: 'Failed to load journal entry', variant: 'destructive' });
+          navigate('/journal');
+        } finally {
+          setLoading(false);
+        }
+      };
+      loadEntry();
+    }
+  }, [entryId, isEditing, user, navigate, toast]);
 
   // Basic SEO for this page (title, description, canonical)
   useEffect(() => {
-    document.title = 'Compose Journal Entry | Wander';
+    document.title = isEditing ? 'Edit Journal Entry | Wander' : 'Compose Journal Entry | Wander';
 
     const desc =
       'Write a new travel journal entry and optionally publish as a post or cross-post to X and Threads.';
@@ -68,30 +104,92 @@ const JournalCompose: React.FC = () => {
       const computedTitle = title.trim() || content.trim().slice(0, 60);
       const today = new Date();
 
-      const { data: entry, error: entryError } = await supabase
-        .from('journal_entries')
-        .insert({
-          user_id: user.id,
-          title: computedTitle,
-          content: content.trim(),
-          entry_date: today.toISOString().slice(0, 10),
-          is_private: isPrivate,
-          is_posted: publishAsPost,
-        })
-        .select('*')
-        .single();
+      if (isEditing && entryId) {
+        // Update existing entry
+        const { data: entry, error: entryError } = await supabase
+          .from('journal_entries')
+          .update({
+            title: computedTitle,
+            content: content.trim(),
+            is_private: isPrivate,
+            is_posted: publishAsPost,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', entryId)
+          .eq('user_id', user.id)
+          .select('*')
+          .single();
 
-      if (entryError) throw entryError;
+        if (entryError) throw entryError;
 
-      if (publishAsPost && entry?.id) {
-        const privacy = isPrivate ? 'private' : 'public';
-        const { error: postError } = await supabase.from('posts').insert({
-          user_id: user.id,
-          content: content.trim(),
-          privacy_level: privacy,
-          journal_entry_id: entry.id,
+        // Update or create post if publish is toggled on
+        if (publishAsPost && entry?.id) {
+          const privacy = isPrivate ? 'private' : 'public';
+          
+          // Check if post exists
+          const { data: existingPost } = await supabase
+            .from('posts')
+            .select('id')
+            .eq('journal_entry_id', entry.id)
+            .single();
+
+          if (existingPost) {
+            // Update existing post - mark as edited
+            await supabase
+              .from('posts')
+              .update({
+                content: content.trim(),
+                privacy_level: privacy,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', existingPost.id);
+          } else {
+            // Create new post
+            await supabase.from('posts').insert({
+              user_id: user.id,
+              content: content.trim(),
+              privacy_level: privacy,
+              journal_entry_id: entry.id,
+            });
+          }
+        }
+
+        toast({
+          title: 'Journal updated',
+          description: 'Your journal entry has been updated.',
         });
-        if (postError) throw postError;
+      } else {
+        // Create new entry
+        const { data: entry, error: entryError } = await supabase
+          .from('journal_entries')
+          .insert({
+            user_id: user.id,
+            title: computedTitle,
+            content: content.trim(),
+            entry_date: today.toISOString().slice(0, 10),
+            is_private: isPrivate,
+            is_posted: publishAsPost,
+          })
+          .select('*')
+          .single();
+
+        if (entryError) throw entryError;
+
+        if (publishAsPost && entry?.id) {
+          const privacy = isPrivate ? 'private' : 'public';
+          const { error: postError } = await supabase.from('posts').insert({
+            user_id: user.id,
+            content: content.trim(),
+            privacy_level: privacy,
+            journal_entry_id: entry.id,
+          });
+          if (postError) throw postError;
+        }
+
+        toast({
+          title: 'Journal saved',
+          description: publishAsPost ? 'Also published as a post.' : 'Saved to your journal.',
+        });
       }
 
       if (postToTwitter || postToThreads) {
@@ -101,10 +199,6 @@ const JournalCompose: React.FC = () => {
         );
       }
 
-      toast({
-        title: 'Journal saved',
-        description: publishAsPost ? 'Also published as a post.' : 'Saved to your journal.',
-      });
       navigate('/journal');
     } catch (error) {
       console.error('Error creating journal entry:', error);
@@ -114,9 +208,20 @@ const JournalCompose: React.FC = () => {
     }
   };
 
+  if (loading) {
+    return (
+      <div className="p-4 max-w-2xl mx-auto">
+        <div className="animate-pulse space-y-4">
+          <div className="h-8 bg-muted rounded w-1/3"></div>
+          <div className="h-64 bg-muted rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-4">New Journal Entry</h1>
+      <h1 className="text-2xl font-bold mb-4">{isEditing ? 'Edit Journal Entry' : 'New Journal Entry'}</h1>
       <Card className="bg-card border shadow-sm">
         <CardContent className="p-4 space-y-3">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -192,7 +297,7 @@ const JournalCompose: React.FC = () => {
             </Button>
             <Button onClick={handleSubmit} disabled={submitting || !content.trim()}>
               <Send className="h-4 w-4 mr-2" />
-              {publishAsPost ? 'Publish' : 'Save'}
+              {isEditing ? (publishAsPost ? 'Update & Publish' : 'Update') : (publishAsPost ? 'Publish' : 'Save')}
             </Button>
           </div>
         </CardContent>

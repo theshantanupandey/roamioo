@@ -81,11 +81,12 @@ export default function Feed() {
       try {
         console.log('Starting to fetch posts...');
         
-        // Fetch posts
+        // Fetch posts - exclude user's own posts
         const { data: postsData, error: postsError } = await supabase
           .from('posts')
           .select('*')
           .eq('privacy_level', 'public')
+          .neq('user_id', user.id)
           .order('created_at', { ascending: false })
           .limit(20);
           
@@ -282,7 +283,7 @@ export default function Feed() {
             *,
             path_waypoints (
               id, title, description, order_index, estimated_time,
-              latitude, longitude
+              latitude, longitude, image_url
             )
           `)
           .in('id', pathIds);

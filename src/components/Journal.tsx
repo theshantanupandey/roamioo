@@ -79,8 +79,8 @@ const Journal: React.FC<JournalProps> = ({ maxEntries, showAllControls = true })
   };
 
   const handleViewEntry = (entryId: string) => {
-    // Navigate to journal page - individual entry view not implemented yet
-    navigate('/journal');
+    // Navigate to edit page for the journal entry
+    navigate(`/journal/compose?id=${entryId}`);
   };
 
   const getMoodEmoji = (mood?: string) => {

@@ -82,7 +82,8 @@ const FollowPath = () => {
             order_index,
             estimated_time,
             latitude,
-            longitude
+            longitude,
+            image_url
           )
         `)
         .eq('is_public', true)
@@ -112,7 +113,7 @@ const FollowPath = () => {
           name: wp.title,
           location: `${wp.latitude}, ${wp.longitude}`,
           description: wp.description || '',
-          image: '/placeholder.svg',
+          image: wp.image_url || '/placeholder.svg',
           day: 1,
         })),
         tags: []
@@ -269,7 +270,7 @@ const FollowPath = () => {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {travelPaths.map(path => (
+                  {travelPaths.filter(path => path.createdBy !== user?.id).map(path => (
                     <Card key={path.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleFollow(path)}>
                       <div className="relative h-48 overflow-hidden rounded-t-lg">
                         <img src={path.image} alt={path.title} className="w-full h-full object-cover" />

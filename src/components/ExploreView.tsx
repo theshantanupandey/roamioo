@@ -52,6 +52,8 @@ export const ExploreView = () => {
           )
         `)
         .eq('privacy_level', 'public')
+        .is('path_id', null)
+        .or('image_urls.not.is.null,video_url.not.is.null')
         .order('likes_count', { ascending: false })
         .limit(20);
 
