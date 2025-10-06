@@ -799,12 +799,12 @@ export default function Profile() {
               <Route className="h-10 w-10 mb-2 opacity-20" />
               <p>No saved paths yet</p>
               {isOwn && (
-                <Button 
-                  className="mt-3 bg-[#BFF627] hover:bg-[#aae120] text-black"
-                  onClick={() => navigate('/discover')}
-                >
-                  Discover paths
-                </Button>
+              <Button 
+                className="mt-3 bg-[#BFF627] hover:bg-[#aae120] text-black"
+                onClick={() => navigate('/follow-path')}
+              >
+                Discover paths
+              </Button>
               )}
             </div>
           )}

@@ -45,6 +45,7 @@ export interface TravelPath {
   id: string;
   title: string;
   description?: string;
+  destination?: string;
   difficulty_level?: string;
   estimated_duration?: string;
   average_rating?: number;
@@ -130,6 +131,7 @@ export const PathSelector: React.FC<PathSelectorProps> = ({
         id: path.id,
         title: path.title,
         description: path.description,
+        destination: path.destination,
         difficulty_level: path.difficulty_level,
         estimated_duration: path.estimated_duration,
         average_rating: path.average_rating,

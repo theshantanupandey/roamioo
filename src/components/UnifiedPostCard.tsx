@@ -65,6 +65,7 @@ interface Path {
   id: string;
   title: string;
   description: string;
+  destination?: string;
   difficulty_level?: string;
   estimated_duration?: string;
   waypoints?: PathWaypoint[];
@@ -374,6 +375,13 @@ export const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
                 Travel Path
               </Badge>
             </div>
+            
+            {path.destination && (
+              <div className="flex items-center gap-2 mb-2">
+                <MapPin className="h-4 w-4 text-purple-600" />
+                <span className="text-sm font-medium text-purple-700 dark:text-purple-300">{path.destination}</span>
+              </div>
+            )}
             
             <p className="text-sm text-muted-foreground mb-4">{path.description}</p>
             

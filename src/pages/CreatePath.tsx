@@ -21,7 +21,7 @@ const CreatePath = () => {
 
   const [pathTitle, setPathTitle] = useState('');
   const [pathDescription, setPathDescription] = useState('');
-  const [destination, setDestination] = useState('');
+  const [pathDestination, setPathDestination] = useState('');
   const [duration, setDuration] = useState('');
   const [coverImage, setCoverImage] = useState('');
   const [tags, setTags] = useState<string[]>([]);
@@ -143,7 +143,7 @@ const CreatePath = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!pathTitle || !destination || !duration || !coverImage) {
+    if (!pathTitle || !pathDestination || !duration || !coverImage) {
       toast({
         title: "Missing information",
         description: "Please fill in all required fields",
@@ -196,6 +196,7 @@ const CreatePath = () => {
         .insert({
           title: pathTitle,
           description: pathDescription,
+          destination: pathDestination,
           created_by: user.id,
           is_public: true, // Make public by default
           estimated_duration: `${duration} days`,
@@ -355,8 +356,8 @@ const CreatePath = () => {
             <Input 
               id="destination"
               placeholder="Paris, France"
-              value={destination}
-              onChange={(e) => setDestination(e.target.value)}
+              value={pathDestination}
+              onChange={(e) => setPathDestination(e.target.value)}
               required
             />
           </div>

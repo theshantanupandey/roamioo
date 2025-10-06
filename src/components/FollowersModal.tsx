@@ -1,12 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { X, User } from 'lucide-react';
+import { X, User, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Input } from '@/components/ui/input';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface Follower {
   id: string;
@@ -31,9 +33,12 @@ interface FollowersModalProps {
 export function FollowersModal({ userId, isOpen, onClose }: FollowersModalProps) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   const [followers, setFollowers] = useState<Follower[]>([]);
+  const [allFollowers, setAllFollowers] = useState<Follower[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (isOpen && userId) {
@@ -59,6 +64,7 @@ export function FollowersModal({ userId, isOpen, onClose }: FollowersModalProps)
       if (error) throw error;
       
       setFollowers(data || []);
+      setAllFollowers(data || []);
       
     } catch (error) {
       console.error('Error fetching followers:', error);
@@ -93,6 +99,13 @@ export function FollowersModal({ userId, isOpen, onClose }: FollowersModalProps)
     onClose();
   };
 
+  const filteredFollowers = searchQuery
+    ? allFollowers.filter(follow => {
+        const username = formatUsername(follow.follower).toLowerCase();
+        return username.includes(searchQuery.toLowerCase());
+      })
+    : followers;
+
   if (!isOpen) return null;
 
   return (
@@ -106,16 +119,27 @@ export function FollowersModal({ userId, isOpen, onClose }: FollowersModalProps)
       {/* Modal */}
       <div className="relative bg-background rounded-lg w-full max-w-md mx-4 max-h-[80vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-lg font-semibold">Followers</h2>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={onClose}
-            className="h-8 w-8 rounded-full"
-          >
-            <X className="h-4 w-4" />
-          </Button>
+        <div className="p-4 border-b space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Followers</h2>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onClose}
+              className="h-8 w-8 rounded-full"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search followers..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </div>
 
         {/* Content */}
@@ -132,9 +156,9 @@ export function FollowersModal({ userId, isOpen, onClose }: FollowersModalProps)
                 </div>
               ))}
             </div>
-          ) : followers.length > 0 ? (
+          ) : filteredFollowers.length > 0 ? (
             <div className="p-2">
-              {followers.map(follow => (
+              {filteredFollowers.map(follow => (
                 <div 
                   key={follow.id} 
                   className="flex items-center justify-between p-3 hover:bg-muted/50 transition-colors rounded-md cursor-pointer"
@@ -162,7 +186,9 @@ export function FollowersModal({ userId, isOpen, onClose }: FollowersModalProps)
           ) : (
             <div className="flex flex-col items-center justify-center py-12 px-4">
               <User className="h-12 w-12 text-muted-foreground mb-3" />
-              <p className="text-muted-foreground text-center">No followers yet</p>
+              <p className="text-muted-foreground text-center">
+                {searchQuery ? 'No followers found' : 'No followers yet'}
+              </p>
             </div>
           )}
         </ScrollArea>

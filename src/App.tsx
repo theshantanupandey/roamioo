@@ -47,6 +47,7 @@ import BookingFlights from "./pages/BookingFlights";
 import BookingTrains from "./pages/BookingTrains";
 import BookingHotels from "./pages/BookingHotels";
 import BookingAdventureActivity from "./pages/BookingAdventureActivity";
+import BookedActivities from "./pages/BookedActivities";
 import AdventureSports from "./pages/AdventureSports";
 import PlaceDetailsPage from "./pages/PlaceDetailsPage";
 import PostDetail from "./pages/PostDetail";
@@ -335,6 +336,13 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <BookingAdventureActivity />
+                  </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/booked-activities" element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <BookedActivities />
                   </AppLayout>
                 </ProtectedRoute>
               } />
