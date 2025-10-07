@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Route, Compass, MapPin, Store, Utensils, Camera, BookOpen, Plus, Share } from 'lucide-react';
+import { Route, Compass, MapPin, Store, Utensils, Camera, BookOpen, Plus, Share, X, Navigation, Share2 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
@@ -247,8 +247,9 @@ const FollowPath = () => {
     });
   };
 
-  const handleSharePath = async () => {
-    if (!selectedPath || !user) {
+  const handleSharePath = async (path?: TravelPath) => {
+    const pathToShare = path || selectedPath;
+    if (!pathToShare || !user) {
       toast({
         title: "Error",
         description: "Please select a path and sign in to share",
@@ -262,8 +263,8 @@ const FollowPath = () => {
         .from('posts')
         .insert({
           user_id: user.id,
-          content: `Check out this amazing travel path: ${selectedPath.title}`,
-          path_id: selectedPath.id,
+          content: `Check out this amazing travel path: ${pathToShare.title}`,
+          path_id: pathToShare.id,
           privacy_level: 'public'
         })
         .select()
@@ -403,11 +404,11 @@ const FollowPath = () => {
             
             <TabsContent value="saved" className="animate-fade-in">
               {loading ? (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {[1, 2].map(i => (
-                    <Card key={i} className="animate-pulse">
+                    <Card key={i} className="animate-pulse overflow-hidden">
                       <div className="h-48 bg-muted" />
-                      <CardContent className="p-4">
+                      <CardContent className="p-5">
                         <div className="h-4 bg-muted rounded w-3/4 mb-2" />
                         <div className="h-3 bg-muted rounded w-1/2" />
                       </CardContent>
@@ -420,34 +421,100 @@ const FollowPath = () => {
                   <p className="text-muted-foreground mb-4">No saved paths yet!</p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {savedPaths.map(path => (
-                    <Card key={path.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleFollow(path)}>
-                      <div className="relative h-48 overflow-hidden rounded-t-lg">
-                        <img src={path.image} alt={path.title} className="w-full h-full object-cover" />
-                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
-                          <h3 className="text-white font-bold text-lg">{path.title}</h3>
-                          <div className="flex items-center text-white/90 text-sm">
-                            <MapPin className="h-4 w-4 mr-1" />
+                    <Card key={path.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                      <div className="relative h-48">
+                        <img 
+                          src={path.image} 
+                          alt={path.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium">
+                          {path.duration}
+                        </div>
+                      </div>
+                      <div className="p-5">
+                        <h3 className="text-xl font-bold mb-2">{path.title}</h3>
+                        <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
+                          {path.description}
+                        </p>
+                        
+                        <div className="flex items-center gap-3 mb-4 pb-4 border-b">
+                          <Avatar className="h-8 w-8">
+                            <AvatarImage src={path.influencer.avatar} />
+                            <AvatarFallback>{path.influencer.name[0]}</AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{path.influencer.name}</p>
+                            <p className="text-xs text-muted-foreground">@{path.influencer.username}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
+                          <div className="flex items-center gap-1">
+                            <MapPin className="h-4 w-4" />
+                            <span>{path.stops.length} stops</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Navigation className="h-4 w-4" />
                             <span>{path.destination}</span>
                           </div>
                         </div>
-                      </div>
-                      <CardContent className="p-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <Avatar className="h-8 w-8 mr-2">
-                              <AvatarImage src={path.influencer.avatar} />
-                              <AvatarFallback>{path.influencer.name[0]}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="text-sm font-medium">{path.influencer.name}</p>
-                              <p className="text-xs text-muted-foreground">@{path.influencer.username}</p>
-                            </div>
-                          </div>
-                          <Badge variant="outline">{path.stops.length} stops</Badge>
+
+                        <div className="flex gap-2">
+                          <Button 
+                            className="flex-1"
+                            onClick={() => handlePlanTrip(path)}
+                            style={{ backgroundColor: '#95C11F', color: '#000' }}
+                          >
+                            <Route className="h-4 w-4 mr-2" />
+                            Plan Trip
+                          </Button>
+                          <Button 
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSharePath(path);
+                            }}
+                          >
+                            <Share2 className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="destructive"
+                            size="icon"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              try {
+                                const { error } = await supabase
+                                  .from('user_followed_paths')
+                                  .delete()
+                                  .eq('user_id', user?.id)
+                                  .eq('path_id', path.id);
+
+                                if (error) throw error;
+
+                                toast({
+                                  title: "Path removed",
+                                  description: "Path has been removed from saved paths",
+                                });
+
+                                // Refresh saved paths
+                                fetchSavedPaths();
+                              } catch (error) {
+                                console.error('Error removing path:', error);
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to remove path",
+                                  variant: "destructive",
+                                });
+                              }
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
-                      </CardContent>
+                      </div>
                     </Card>
                   ))}
                 </div>
@@ -527,7 +594,7 @@ const FollowPath = () => {
               <div className="flex gap-2">
                 <Button 
                   variant="outline"
-                  onClick={handleSharePath}
+                  onClick={() => handleSharePath()}
                 >
                   <Share className="mr-2 h-4 w-4" />
                   Share
