@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Image, Video, Route, Plane, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { UnifiedPostCard } from '@/components/UnifiedPostCard';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -51,6 +52,7 @@ export default function UserFeed() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [profileUser, setProfileUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [activeFilter, setActiveFilter] = useState<'all' | 'posts' | 'videos' | 'paths' | 'trips' | 'journal'>('all');
 
   useEffect(() => {
     if (userId) {
@@ -146,6 +148,25 @@ export default function UserFeed() {
     return user.username || 'Unknown User';
   };
 
+  const getFilteredPosts = () => {
+    switch (activeFilter) {
+      case 'posts':
+        return posts.filter(post => post.image_urls && post.image_urls.length > 0 && !post.video_url && !post.trip_id && !(post as any).path_id && !post.journal_entry_id);
+      case 'videos':
+        return posts.filter(post => post.video_url);
+      case 'paths':
+        return posts.filter(post => (post as any).path_id);
+      case 'trips':
+        return posts.filter(post => post.trip_id);
+      case 'journal':
+        return posts.filter(post => post.journal_entry_id);
+      default:
+        return posts;
+    }
+  };
+
+  const filteredPosts = getFilteredPosts();
+
   if (loading) {
     return (
       <div className="container px-4 py-6">
@@ -183,10 +204,39 @@ export default function UserFeed() {
         </div>
       </div>
 
+      {/* Filter Tabs */}
+      <Tabs value={activeFilter} onValueChange={(v) => setActiveFilter(v as any)} className="w-full mb-6">
+        <TabsList className="w-full grid grid-cols-6 h-auto">
+          <TabsTrigger value="all" className="text-xs px-2 py-2">
+            All
+          </TabsTrigger>
+          <TabsTrigger value="posts" className="text-xs px-2 py-2">
+            <Image className="h-3 w-3 mr-1" />
+            Posts
+          </TabsTrigger>
+          <TabsTrigger value="videos" className="text-xs px-2 py-2">
+            <Video className="h-3 w-3 mr-1" />
+            Videos
+          </TabsTrigger>
+          <TabsTrigger value="paths" className="text-xs px-2 py-2">
+            <Route className="h-3 w-3 mr-1" />
+            Paths
+          </TabsTrigger>
+          <TabsTrigger value="trips" className="text-xs px-2 py-2">
+            <Plane className="h-3 w-3 mr-1" />
+            Trips
+          </TabsTrigger>
+          <TabsTrigger value="journal" className="text-xs px-2 py-2">
+            <BookOpen className="h-3 w-3 mr-1" />
+            Journal
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {/* Posts */}
       <div className="space-y-6">
-        {posts.length > 0 ? (
-          posts.map((post: any) => (
+        {filteredPosts.length > 0 ? (
+          filteredPosts.map((post: any) => (
             <UnifiedPostCard
               key={post.id}
               post={post}
@@ -198,7 +248,7 @@ export default function UserFeed() {
           ))
         ) : (
           <div className="text-center py-12">
-            <p className="text-muted-foreground">No posts yet</p>
+            <p className="text-muted-foreground">No {activeFilter === 'all' ? 'posts' : activeFilter} yet</p>
           </div>
         )}
       </div>

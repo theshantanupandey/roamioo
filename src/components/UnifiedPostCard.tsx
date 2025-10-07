@@ -117,6 +117,8 @@ export const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
   const [loadingTrip, setLoadingTrip] = useState(false);
   const [tripPath, setTripPath] = useState<any>(null);
   const [loadingPath, setLoadingPath] = useState(false);
+  const [tripJoinRequestsCount, setTripJoinRequestsCount] = useState(0);
+  const [pathSavedCount, setPathSavedCount] = useState(0);
   // --- Fetch trip info if missing but post.trip_id exists (for feed posts) ---
   useEffect(() => {
     async function fetchTrip() {
@@ -173,6 +175,32 @@ export const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
     fetchTrip();
     // eslint-disable-next-line
   }, [post.trip_id, tripProp]);
+
+  // Fetch trip join requests count
+  useEffect(() => {
+    if (post.trip_id) {
+      supabase
+        .from('trip_join_requests')
+        .select('id', { count: 'exact', head: true })
+        .eq('trip_id', post.trip_id)
+        .then(({ count }) => {
+          setTripJoinRequestsCount(count || 0);
+        });
+    }
+  }, [post.trip_id]);
+
+  // Fetch path saved count
+  useEffect(() => {
+    if (path?.id) {
+      supabase
+        .from('user_followed_paths')
+        .select('id', { count: 'exact', head: true })
+        .eq('path_id', path.id)
+        .then(({ count }) => {
+          setPathSavedCount(count || 0);
+        });
+    }
+  }, [path?.id]);
 
   function getPostType(): 'trip' | 'journal' | 'path' | 'video' | 'normal' {
     // Path posts take priority over trip posts
@@ -463,7 +491,16 @@ export const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
             )}
             
             {/* Only show save button if user is not the creator */}
-            {(!user || (path as any).created_by !== user.id) && (
+            {user && (path as any).created_by === user.id ? (
+              <Button 
+                disabled 
+                className="w-full bg-muted text-muted-foreground cursor-not-allowed"
+                variant="outline"
+              >
+                <Route className="h-4 w-4 mr-2" />
+                Your Path
+              </Button>
+            ) : (
               <PathFollowButton
                 pathId={path.id}
                 isFollowing={isFollowingPath}
@@ -494,6 +531,26 @@ export const UnifiedPostCard: React.FC<UnifiedPostCardProps> = ({
             <MessageSquare className="h-5 w-5" />
             <span>{Math.max(0, post.comments_count || 0)}</span>
           </Button>
+          {postType === 'trip' && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="flex items-center gap-1"
+            >
+              <Users className="h-5 w-5" />
+              <span>{tripJoinRequestsCount}</span>
+            </Button>
+          )}
+          {postType === 'path' && (
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="flex items-center gap-1"
+            >
+              <Route className="h-5 w-5" />
+              <span>{pathSavedCount}</span>
+            </Button>
+          )}
           <Button 
             variant="ghost" 
             size="sm" 

@@ -43,6 +43,7 @@ const FollowPath = () => {
   const [activePathId, setActivePathId] = useState<string | null>(null);
   const [activeDayFilter, setActiveDayFilter] = useState<number | null>(null);
   const [travelPaths, setTravelPaths] = useState<TravelPath[]>([]);
+  const [savedPaths, setSavedPaths] = useState<TravelPath[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -50,6 +51,7 @@ const FollowPath = () => {
 
   useEffect(() => {
     fetchTravelPaths();
+    fetchSavedPaths();
   }, [user]);
 
   const fetchTravelPaths = async () => {
@@ -129,6 +131,85 @@ const FollowPath = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSavedPaths = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: followedPaths, error } = await supabase
+        .from('user_followed_paths')
+        .select(`
+          path_id,
+          travel_paths (
+            id,
+            title,
+            description,
+            image_url,
+            estimated_duration,
+            difficulty_level,
+            created_by,
+            destination,
+            created_at,
+            users!travel_paths_created_by_fkey (
+              id,
+              username,
+              first_name,
+              last_name,
+              profile_image_url
+            ),
+            path_waypoints (
+              id,
+              title,
+              description,
+              order_index,
+              estimated_time,
+              latitude,
+              longitude,
+              image_url
+            )
+          )
+        `)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      const formattedSavedPaths: TravelPath[] = (followedPaths || [])
+        .map(fp => fp.travel_paths)
+        .filter(path => path !== null)
+        .map((path: any) => ({
+          id: path.id,
+          title: path.title,
+          destination: path.destination || '',
+          duration: path.estimated_duration || '',
+          image: path.image_url || '/placeholder.svg',
+          description: path.description || '',
+          createdBy: path.created_by,
+          influencer: {
+            name: path.users?.first_name && path.users?.last_name 
+              ? `${path.users.first_name} ${path.users.last_name}`
+              : path.users?.username || 'Unknown User',
+            username: path.users?.username || 'unknown',
+            avatar: path.users?.profile_image_url || '/placeholder.svg',
+            followers: '0'
+          },
+          stops: (path.path_waypoints || []).map((wp: any) => ({
+            id: wp.id,
+            type: 'attraction' as const,
+            name: wp.title || 'Stop',
+            location: '',
+            description: wp.description || '',
+            image: wp.image_url || '/placeholder.svg',
+            day: Math.ceil((wp.order_index + 1) / 3),
+            estimated_time: wp.estimated_time
+          })),
+          tags: []
+        }));
+
+      setSavedPaths(formattedSavedPaths);
+    } catch (error) {
+      console.error('Error fetching saved paths:', error);
     }
   };
 
@@ -321,10 +402,56 @@ const FollowPath = () => {
             </TabsContent>
             
             <TabsContent value="saved" className="animate-fade-in">
-              <div className="text-center py-10">
-                <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground mb-4">Saved paths coming soon!</p>
-              </div>
+              {loading ? (
+                <div className="space-y-4">
+                  {[1, 2].map(i => (
+                    <Card key={i} className="animate-pulse">
+                      <div className="h-48 bg-muted" />
+                      <CardContent className="p-4">
+                        <div className="h-4 bg-muted rounded w-3/4 mb-2" />
+                        <div className="h-3 bg-muted rounded w-1/2" />
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              ) : savedPaths.length === 0 ? (
+                <div className="text-center py-10">
+                  <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+                  <p className="text-muted-foreground mb-4">No saved paths yet!</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {savedPaths.map(path => (
+                    <Card key={path.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleFollow(path)}>
+                      <div className="relative h-48 overflow-hidden rounded-t-lg">
+                        <img src={path.image} alt={path.title} className="w-full h-full object-cover" />
+                        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                          <h3 className="text-white font-bold text-lg">{path.title}</h3>
+                          <div className="flex items-center text-white/90 text-sm">
+                            <MapPin className="h-4 w-4 mr-1" />
+                            <span>{path.destination}</span>
+                          </div>
+                        </div>
+                      </div>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <Avatar className="h-8 w-8 mr-2">
+                              <AvatarImage src={path.influencer.avatar} />
+                              <AvatarFallback>{path.influencer.name[0]}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="text-sm font-medium">{path.influencer.name}</p>
+                              <p className="text-xs text-muted-foreground">@{path.influencer.username}</p>
+                            </div>
+                          </div>
+                          <Badge variant="outline">{path.stops.length} stops</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
             
             <TabsContent value="my" className="animate-fade-in">
@@ -348,30 +475,35 @@ const FollowPath = () => {
                   </div>
                   
                   {travelPaths.filter(path => path.createdBy === user?.id).length > 0 && (
-                    <div>
+                    <div className="space-y-4">
                       <h3 className="font-medium mb-3">Your Created Paths</h3>
                       {travelPaths
                         .filter(path => path.createdBy === user?.id)
                         .map(path => (
-                          <Card key={path.id} className="mb-3 cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleFollow(path)}>
-                            <CardContent className="p-4">
-                              <div className="flex gap-3">
-                                <div className="h-16 w-16 overflow-hidden rounded-md flex-shrink-0">
-                                  <img src={path.image} alt={path.title} className="w-full h-full object-cover" />
+                          <Card key={path.id} className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => handleFollow(path)}>
+                            <div className="relative h-48 overflow-hidden rounded-t-lg">
+                              <img src={path.image} alt={path.title} className="w-full h-full object-cover" />
+                              <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                                <h3 className="text-white font-bold text-lg">{path.title}</h3>
+                                <div className="flex items-center text-white/90 text-sm">
+                                  <MapPin className="h-4 w-4 mr-1" />
+                                  <span>{path.destination}</span>
                                 </div>
-                                <div className="flex-1">
-                                  <h4 className="font-medium">{path.title}</h4>
-                                  <p className="text-sm text-muted-foreground line-clamp-1">{path.description}</p>
-                                  <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                                    <span>{path.stops.length} stops</span>
-                                    {path.duration && (
-                                      <>
-                                        <span>•</span>
-                                        <span>{path.duration}</span>
-                                      </>
-                                    )}
+                              </div>
+                            </div>
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center">
+                                  <Avatar className="h-8 w-8 mr-2">
+                                    <AvatarImage src={path.influencer.avatar} />
+                                    <AvatarFallback>{path.influencer.name[0]}</AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <p className="text-sm font-medium">{path.influencer.name}</p>
+                                    <p className="text-xs text-muted-foreground">@{path.influencer.username}</p>
                                   </div>
                                 </div>
+                                <Badge variant="outline">{path.stops.length} stops</Badge>
                               </div>
                             </CardContent>
                           </Card>
