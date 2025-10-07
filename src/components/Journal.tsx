@@ -1,14 +1,23 @@
 
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { Calendar, ChevronRight, Plus, Edit3, Eye, Heart, MessageCircle, Bookmark, Book } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Plus, Book } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { SwipeableJournalCard } from './SwipeableJournalCard';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 interface JournalEntry {
   id: string;
@@ -33,6 +42,8 @@ interface JournalProps {
 const Journal: React.FC<JournalProps> = ({ maxEntries, showAllControls = true }) => {
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -79,8 +90,41 @@ const Journal: React.FC<JournalProps> = ({ maxEntries, showAllControls = true })
   };
 
   const handleViewEntry = (entryId: string) => {
-    // Navigate to edit page for the journal entry
     navigate(`/journal/compose?id=${entryId}`);
+  };
+
+  const handleDeleteEntry = (entryId: string) => {
+    setEntryToDelete(entryId);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!entryToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from('journal_entries')
+        .delete()
+        .eq('id', entryToDelete);
+
+      if (error) throw error;
+
+      setEntries(entries.filter(e => e.id !== entryToDelete));
+      toast({
+        title: "Entry deleted",
+        description: "Your journal entry has been deleted successfully"
+      });
+    } catch (error) {
+      console.error('Error deleting entry:', error);
+      toast({
+        title: "Error",
+        description: "Failed to delete journal entry",
+        variant: "destructive"
+      });
+    } finally {
+      setDeleteDialogOpen(false);
+      setEntryToDelete(null);
+    }
   };
 
   const getMoodEmoji = (mood?: string) => {
@@ -134,72 +178,35 @@ const Journal: React.FC<JournalProps> = ({ maxEntries, showAllControls = true })
           </Button>
         </div>
       ) : (
-        entries.map((entry) => (
-          <Card 
-            key={entry.id} 
-            className="border-l-4 border-l-[#95C11F] hover:shadow-md transition-all cursor-pointer"
-            onClick={() => handleViewEntry(entry.id)}
-          >
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-semibold text-sm line-clamp-1">{entry.title}</h3>
-                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                    {getMoodEmoji(entry.mood)}
-                    {getWeatherEmoji(entry.weather)}
-                  </div>
-                </div>
-                
-                <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
-                  {entry.content}
-                </p>
-                
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Calendar className="h-3 w-3" />
-                    {format(new Date(entry.entry_date), 'MMM dd, yyyy')}
-                    {entry.location && (
-                      <>
-                        <span>•</span>
-                        <span className="line-clamp-1">{entry.location}</span>
-                      </>
-                    )}
-                  </div>
-                  
-                  {!entry.is_private && (
-                    <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Heart className="h-3 w-3" />
-                        {entry.likes_count || 0}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <MessageCircle className="h-3 w-3" />
-                        {entry.comments_count || 0}
-                      </div>
-                    </div>
-                  )}
-                </div>
-                
-                {entry.image_urls && entry.image_urls.length > 0 && (
-                  <div className="mt-2 flex gap-1">
-                    {entry.image_urls.slice(0, 3).map((url, index) => (
-                      <div key={index} className="w-12 h-12 rounded overflow-hidden">
-                        <img 
-                          src={url} 
-                          alt={`Entry ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                    ))}
-                    {entry.image_urls.length > 3 && (
-                      <div className="w-12 h-12 rounded bg-muted flex items-center justify-center text-xs">
-                        +{entry.image_urls.length - 3}
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-          </Card>
-        ))
+        <>
+          {entries.map((entry) => (
+            <SwipeableJournalCard
+              key={entry.id}
+              entry={entry}
+              onEdit={handleViewEntry}
+              onDelete={handleDeleteEntry}
+              getMoodEmoji={getMoodEmoji}
+              getWeatherEmoji={getWeatherEmoji}
+            />
+          ))}
+          
+          <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete Journal Entry</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to delete this journal entry? This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>
       )}
     </div>
   );

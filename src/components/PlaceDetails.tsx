@@ -174,21 +174,25 @@ export const PlaceDetails: React.FC<PlaceDetailsProps> = ({ place, open, onOpenC
   const reviewSummary = getReviewSummary(reviews);
   
   const handleOpenDirections = () => {
-    if (place.lat && place.lng) {
-      // In a real app, this would open Google Maps with directions
-      const mapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${place.lat},${place.lng}`;
-      window.open(mapsUrl, '_blank');
-    } else {
-      // Fallback to search by name and address
-      const searchQuery = encodeURIComponent(`${place.name} ${place.address || ''}`);
-      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${searchQuery}`;
-      window.open(mapsUrl, '_blank');
-    }
+    onOpenChange(false);
     
-    toast({
-      title: "Opening directions",
-      description: `Finding route to ${place.name}`,
-    });
+    if (place.lat && place.lng) {
+      navigate('/roamio-map', {
+        state: {
+          destination: {
+            lat: place.lat,
+            lng: place.lng,
+            address: `${place.name}, ${place.address || ''}`
+          }
+        }
+      });
+    } else {
+      toast({
+        title: "Location unavailable",
+        description: "This place doesn't have coordinates for navigation",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleViewReviews = () => {

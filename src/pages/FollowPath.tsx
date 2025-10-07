@@ -323,8 +323,6 @@ const FollowPath = () => {
           <Tabs defaultValue="popular" className="w-full">
             <TabsList className="mb-4">
               <TabsTrigger value="popular">Popular</TabsTrigger>
-              <TabsTrigger value="new">New</TabsTrigger>
-              <TabsTrigger value="nearby">Nearby</TabsTrigger>
               <TabsTrigger value="saved">Saved</TabsTrigger>
               <TabsTrigger value="my">My Paths</TabsTrigger>
             </TabsList>
@@ -385,22 +383,6 @@ const FollowPath = () => {
               )}
             </TabsContent>
             
-            <TabsContent value="new" className="animate-fade-in">
-              <div className="text-center py-10">
-                <Compass className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground mb-4">New paths are coming soon!</p>
-              </div>
-            </TabsContent>
-            
-            <TabsContent value="nearby" className="animate-fade-in">
-              <div className="text-center py-10">
-                <MapPin className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-                <p className="text-muted-foreground mb-4">Enable location to discover nearby paths</p>
-                <Button variant="outline">
-                  Enable Location
-                </Button>
-              </div>
-            </TabsContent>
             
             <TabsContent value="saved" className="animate-fade-in">
               {loading ? (

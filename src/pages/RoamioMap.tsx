@@ -32,6 +32,7 @@ const RoamioMap = () => {
   // Check if opened as a modal/picker
   const isLocationPicker = location.state?.isLocationPicker || false;
   const onLocationSelect = location.state?.onLocationSelect;
+  const destinationFromState = location.state?.destination;
 
   useEffect(() => {
     // Fetch Mapbox token from backend
@@ -63,6 +64,13 @@ const RoamioMap = () => {
     
     fetchMapboxToken();
   }, []);
+
+  useEffect(() => {
+    // Set destination if coming from nearby places
+    if (destinationFromState && map.current) {
+      updateLocation(destinationFromState.lat, destinationFromState.lng, destinationFromState.address);
+    }
+  }, [destinationFromState, mapboxToken]);
 
   const initializeMap = (token: string) => {
     if (!mapContainer.current || map.current) return;
