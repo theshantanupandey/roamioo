@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { MapPin, Search, Navigation, X } from 'lucide-react';
+import { MapPin, Search, Navigation, X, Compass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
@@ -207,63 +207,16 @@ const RoamioMap = () => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] bg-background">
-      {/* Header - Only show when not in picker mode */}
-      {!isLocationPicker && (
-        <div className="border-b bg-card p-4">
-          <div className="flex items-center gap-3">
-            <MapPin className="h-6 w-6" style={{ color: '#95C11F' }} />
-            <h1 className="text-xl font-bold">Roamio Map</h1>
-          </div>
+      {/* Header */}
+      <div className="border-b bg-card p-4">
+        <div className="flex items-center gap-3">
+          <MapPin className="h-6 w-6" style={{ color: '#95C11F' }} />
+          <h1 className="text-xl font-bold">Roamio Map</h1>
         </div>
-      )}
+      </div>
 
-      {/* Search Bar - Conditional rendering based on picker mode */}
-      {isLocationPicker ? (
-        <div className="p-4 border-b bg-card">
-          <div className="flex gap-2 mb-2">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search for a place..."
-                value={searchQuery}
-                onChange={(e) => handleSearchInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-                onFocus={() => searchSuggestions.length > 0 && setShowSuggestions(true)}
-                className="pl-10"
-              />
-              {showSuggestions && searchSuggestions.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-card border rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
-                  {searchSuggestions.map((suggestion, index) => (
-                    <button
-                      key={index}
-                      onClick={() => handleSelectSuggestion(suggestion)}
-                      className="w-full px-4 py-2 text-left hover:bg-muted flex items-start gap-2 border-b last:border-b-0"
-                    >
-                      <MapPin className="h-4 w-4 mt-1 flex-shrink-0 text-muted-foreground" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">{suggestion.text}</p>
-                        <p className="text-xs text-muted-foreground">{suggestion.place_name}</p>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-            <Button onClick={handleSearch} style={{ backgroundColor: '#95C11F', color: '#000' }}>
-              Search
-            </Button>
-          </div>
-          <Button 
-            variant="outline" 
-            onClick={handleCurrentLocation}
-            disabled={isGettingLocation}
-            className="w-full"
-          >
-            <Navigation className="h-4 w-4 mr-2" />
-            {isGettingLocation ? 'Getting Location...' : 'Use Current Location'}
-          </Button>
-        </div>
-      ) : (
+      {/* Search Bar - Only for location picker mode */}
+      {isLocationPicker && (
         <div className="p-4 border-b bg-card">
           <div className="flex gap-2">
             <div className="flex-1 relative">
@@ -297,13 +250,44 @@ const RoamioMap = () => {
             <Button onClick={handleSearch} style={{ backgroundColor: '#95C11F', color: '#000' }}>
               Search
             </Button>
-            <Button 
-              variant="outline" 
-              onClick={handleCurrentLocation}
-              disabled={isGettingLocation}
-            >
-              <Navigation className="h-4 w-4 mr-2" />
-              {isGettingLocation ? 'Getting...' : 'Current'}
+          </div>
+        </div>
+      )}
+
+      {/* Search Bar - For non-picker mode */}
+      {!isLocationPicker && (
+        <div className="p-4 border-b bg-card">
+          <div className="flex gap-2">
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search for a place..."
+                value={searchQuery}
+                onChange={(e) => handleSearchInput(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                onFocus={() => searchSuggestions.length > 0 && setShowSuggestions(true)}
+                className="pl-10"
+              />
+              {showSuggestions && searchSuggestions.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-card border rounded-md shadow-lg z-50 max-h-60 overflow-y-auto">
+                  {searchSuggestions.map((suggestion, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleSelectSuggestion(suggestion)}
+                      className="w-full px-4 py-2 text-left hover:bg-muted flex items-start gap-2 border-b last:border-b-0"
+                    >
+                      <MapPin className="h-4 w-4 mt-1 flex-shrink-0 text-muted-foreground" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{suggestion.text}</p>
+                        <p className="text-xs text-muted-foreground">{suggestion.place_name}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <Button onClick={handleSearch} style={{ backgroundColor: '#95C11F', color: '#000' }}>
+              Search
             </Button>
           </div>
         </div>
@@ -312,6 +296,16 @@ const RoamioMap = () => {
       {/* Map Container */}
       <div className="flex-1 relative">
         <div ref={mapContainer} className="absolute inset-0" />
+        
+        {/* Floating Current Location Button */}
+        <Button
+          onClick={handleCurrentLocation}
+          disabled={isGettingLocation}
+          className="absolute bottom-24 right-4 h-14 w-14 rounded-full shadow-lg z-10"
+          style={{ backgroundColor: '#95C11F', color: '#000' }}
+        >
+          <Compass className="h-6 w-6" />
+        </Button>
       </div>
 
       {/* Selected Location Info */}
@@ -328,8 +322,17 @@ const RoamioMap = () => {
             style={{ backgroundColor: '#95C11F', color: '#000' }}
             onClick={handleConfirmLocation}
           >
-            <MapPin className="h-4 w-4 mr-2" />
-            {isLocationPicker ? 'Select This Location' : 'Confirm Location'}
+            {isLocationPicker ? (
+              <>
+                <MapPin className="h-4 w-4 mr-2" />
+                Select This Location
+              </>
+            ) : (
+              <>
+                <Navigation className="h-4 w-4 mr-2" />
+                Get Directions
+              </>
+            )}
           </Button>
         </div>
       )}

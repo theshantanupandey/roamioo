@@ -9,10 +9,11 @@ export function BottomNavigation() {
   const { safeAreaClasses } = useNative();
   const location = useLocation();
 
-  // Hide bottom navigation on messaging pages
+  // Hide bottom navigation on messaging pages and Roamio map
   const isMessagingPage = location.pathname === '/messages' || location.pathname.startsWith('/messages');
+  const isRoamioMap = location.pathname === '/roamio-map';
   
-  if (isMessagingPage) {
+  if (isMessagingPage || isRoamioMap) {
     return null;
   }
 
