@@ -518,6 +518,22 @@ const Index = () => {
 
               <div 
                 className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                onClick={() => handleNavigationWithScroll('/roamio-map', travelerToolsRef)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-full" style={{ backgroundColor: 'rgba(149, 193, 31, 0.1)' }}>
+                    <MapPin className="h-5 w-5" style={{ color: '#95C11F' }} />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Roamio Map</p>
+                    <p className="text-xs text-muted-foreground">Interactive map with location search</p>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+              </div>
+
+              <div 
+                className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer"
                 onClick={() => handleNavigationWithScroll('/adventure-sports', travelerToolsRef)}
               >
                 <div className="flex items-center gap-3">

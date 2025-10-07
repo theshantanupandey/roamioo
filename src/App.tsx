@@ -237,7 +237,9 @@ const App = () => (
               } />
               <Route path="/roamio-map" element={
                 <ProtectedRoute>
-                  <RoamioMap />
+                  <AppLayout>
+                    <RoamioMap />
+                  </AppLayout>
                 </ProtectedRoute>
               } />
               <Route path="/follow-path" element={

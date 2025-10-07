@@ -184,13 +184,25 @@ const AdventureSports = () => {
     <div className="container mx-auto p-4 pb-20 max-w-7xl">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
-          <Compass className="h-8 w-8 text-primary" />
-          Adventure Sports
-        </h1>
-        <p className="text-muted-foreground mt-2">
-          Discover thrilling activities and extreme sports around the world
-        </p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground flex items-center gap-2">
+              <Compass className="h-8 w-8 text-primary" />
+              Adventure Sports
+            </h1>
+            <p className="text-muted-foreground mt-2">
+              Discover thrilling activities and extreme sports around the world
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={() => navigate('/booked-activities')}
+            className="flex items-center gap-2"
+          >
+            <Calendar className="h-4 w-4" />
+            My Bookings
+          </Button>
+        </div>
       </div>
 
       {/* Search and Filters */}
