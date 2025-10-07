@@ -542,8 +542,8 @@ export default function Feed() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-4xl">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+    <div className="container mx-auto px-4 py-6 max-w-6xl">
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         {/* Main feed - larger on desktop */}
         <div className="lg:col-span-3 space-y-6">
           {posts.length > 0 ? (
@@ -623,26 +623,26 @@ export default function Feed() {
           )}
         </div>
 
-        {/* Sidebar with suggestions - smaller on desktop */}
-        <div className="hidden lg:block">
+        {/* Sidebar with suggestions - wider on desktop */}
+        <div className="hidden lg:block lg:col-span-2">
           <Card>
-            <CardContent className="p-4">
-              <h3 className="font-medium mb-4">People to follow</h3>
+            <CardContent className="p-6">
+              <h3 className="font-semibold text-lg mb-6">People to follow</h3>
               
               {suggestions.length > 0 ? (
                 <div className="space-y-4">
                   {suggestions.map(suggestion => (
-                    <div key={suggestion.id} className="flex items-center justify-between">
-                      <div className="flex items-center space-x-3">
+                    <div key={suggestion.id} className="flex items-center justify-between gap-3">
+                      <div className="flex items-center space-x-3 flex-1 min-w-0">
                         <Avatar 
-                          className="cursor-pointer hover:opacity-80 transition-opacity w-8 h-8"
+                          className="cursor-pointer hover:opacity-80 transition-opacity w-10 h-10 flex-shrink-0"
                           onClick={() => handleProfileClick(suggestion.id)}
                         >
                           <AvatarImage src={suggestion.profile_image_url} />
-                          <AvatarFallback className="text-xs">{getInitials(suggestion)}</AvatarFallback>
+                          <AvatarFallback className="text-sm">{getInitials(suggestion)}</AvatarFallback>
                         </Avatar>
                         <div 
-                          className="text-xs font-medium cursor-pointer hover:underline"
+                          className="text-sm font-medium cursor-pointer hover:underline truncate"
                           onClick={() => handleProfileClick(suggestion.id)}
                         >
                           {formatUsername(suggestion)}
@@ -653,7 +653,7 @@ export default function Feed() {
                         variant={suggestion.is_following ? "outline" : "default"}
                         onClick={() => handleFollowSuggestion(suggestion.id)}
                         disabled={suggestion.is_following}
-                        className={`text-xs h-6 px-2 ${suggestion.is_following ? "text-muted-foreground" : ""}`}
+                        className={`text-sm h-8 px-3 flex-shrink-0 ${suggestion.is_following ? "text-muted-foreground" : ""}`}
                       >
                         {suggestion.is_following ? 'Following' : 'Follow'}
                       </Button>
@@ -661,7 +661,7 @@ export default function Feed() {
                   ))}
                 </div>
               ) : (
-                <div className="text-xs text-muted-foreground text-center py-4">
+                <div className="text-sm text-muted-foreground text-center py-6">
                   No more suggestions available
                 </div>
               )}

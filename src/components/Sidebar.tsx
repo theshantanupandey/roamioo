@@ -38,6 +38,7 @@ const navigationItems = [
 
 const travellerToolsItems = [
   { name: 'Trips', href: '/trips', icon: Route },
+  { name: 'Roamio Map', href: '/roamio-map', icon: MapPin },
   { name: 'Adventure Sports', href: '/adventure-sports', icon: Compass },
   { name: 'Translation', href: '/translation', icon: Languages },
   { name: 'Nearby Places', href: '/nearby-places', icon: MapPin }

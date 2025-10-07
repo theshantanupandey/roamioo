@@ -32,6 +32,7 @@ import JournalPage from "./pages/JournalPage";
 import JournalCompose from "./pages/JournalCompose";
 import CreatePost from "./pages/CreatePost";
 import CreatePath from "./pages/CreatePath";
+import RoamioMap from "./pages/RoamioMap";
 import FollowPath from "./pages/FollowPath";
 import TranslationPage from "./pages/TranslationPage";
 import NearbyPlaces from "./pages/NearbyPlaces";
@@ -232,6 +233,11 @@ const App = () => (
                   <AppLayout>
                     <CreatePath />
                   </AppLayout>
+                </ProtectedRoute>
+              } />
+              <Route path="/roamio-map" element={
+                <ProtectedRoute>
+                  <RoamioMap />
                 </ProtectedRoute>
               } />
               <Route path="/follow-path" element={

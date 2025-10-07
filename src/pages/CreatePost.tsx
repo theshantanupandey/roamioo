@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { AspectRatio } from '@/components/ui/aspect-ratio';
-import { X, Camera, Map, Image as ImageIcon, Route, Calendar, Users, DollarSign, Instagram, Share2, Video, Plus } from 'lucide-react';
+import { X, Camera, Map, Image as ImageIcon, Route, Calendar, Users, DollarSign, Instagram, Share2, Video, Plus, MapPin } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
@@ -837,12 +837,33 @@ const CreatePost = () => {
 
           <div className="space-y-2">
             <Label htmlFor="trip-location">Location</Label>
-            <Input
-              id="trip-location"
-              placeholder="Where are you going?"
-              value={postLocation}
-              onChange={(e) => setPostLocation(e.target.value)}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="trip-location"
+                placeholder="Where are you going?"
+                value={postLocation}
+                onChange={(e) => setPostLocation(e.target.value)}
+                className="flex-1"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="icon"
+                onClick={() => {
+                  navigate('/roamio-map', {
+                    state: {
+                      isLocationPicker: true,
+                      onLocationSelect: (location: any) => {
+                        setPostLocation(location.address);
+                      }
+                    }
+                  });
+                }}
+                title="Locate on map"
+              >
+                <MapPin className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

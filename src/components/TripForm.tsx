@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { CalendarIcon, Plus, X, Camera } from 'lucide-react';
+import { CalendarIcon, Plus, X, Camera, MapPin } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { PathSelector, PathSelection } from '@/components/PathSelector';
@@ -196,13 +196,28 @@ export const TripForm: React.FC<TripFormProps> = ({
       {/* Destination */}
       <div className="space-y-2">
         <Label htmlFor="destination">Destination *</Label>
-        <Input
-          id="destination"
-          value={formData.destination}
-          onChange={(e) => handleInputChange('destination', e.target.value)}
-          placeholder="Where are you going?"
-          required
-        />
+        <div className="flex gap-2">
+          <Input
+            id="destination"
+            value={formData.destination}
+            onChange={(e) => handleInputChange('destination', e.target.value)}
+            placeholder="Where are you going?"
+            required
+            className="flex-1"
+          />
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              // Navigate to map with location picker mode
+              window.location.href = '/roamio-map?picker=true&field=destination';
+            }}
+            title="Locate on map"
+          >
+            <MapPin className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {/* Description */}

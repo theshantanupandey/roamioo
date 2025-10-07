@@ -570,12 +570,35 @@ const CreatePath = () => {
                     
                     <div className="space-y-2">
                       <Label>Location</Label>
-                      <Input
-                        placeholder="Location details"
-                        value={stop.location}
-                        onChange={(e) => updateStop(stop.id, 'location', e.target.value)}
-                        required
-                      />
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Location details"
+                          value={stop.location}
+                          onChange={(e) => updateStop(stop.id, 'location', e.target.value)}
+                          required
+                          className="flex-1"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            navigate('/roamio-map', {
+                              state: {
+                                isLocationPicker: true,
+                                onLocationSelect: (location: any) => {
+                                  updateStop(stop.id, 'location', location.address);
+                                  updateStop(stop.id, 'latitude', location.lat);
+                                  updateStop(stop.id, 'longitude', location.lng);
+                                }
+                              }
+                            });
+                          }}
+                          title="Locate on map"
+                        >
+                          <MapPin className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     
                     <div className="space-y-2">
