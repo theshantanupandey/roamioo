@@ -403,111 +403,98 @@ const FollowPath = () => {
                   <p className="text-muted-foreground mb-4">No saved paths yet!</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {savedPaths.map(path => (
-                    <Card key={path.id} className="overflow-hidden hover:shadow-lg transition-all group">
-                      <div className="relative h-48 md:h-56 lg:h-64 overflow-hidden">
+                    <Card key={path.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+                      <div className="relative h-48">
                         <img 
                           src={path.image} 
                           alt={path.title}
-                          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                          className="w-full h-full object-cover"
                         />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <div className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium shadow-md">
+                        <div className="absolute top-3 right-3 bg-background/90 backdrop-blur-sm px-3 py-1 rounded-full text-sm font-medium">
                           {path.duration}
                         </div>
                       </div>
-                      
-                      <div className="p-4 md:p-5">
-                        <h3 className="text-lg md:text-xl font-bold mb-2 line-clamp-1 group-hover:text-primary transition-colors">
-                          {path.title}
-                        </h3>
-                        <p className="text-muted-foreground text-xs md:text-sm mb-3 md:mb-4 line-clamp-2">
+                      <div className="p-5">
+                        <h3 className="text-xl font-bold mb-2">{path.title}</h3>
+                        <p className="text-muted-foreground text-sm mb-4 line-clamp-2">
                           {path.description}
                         </p>
                         
-                        <div className="flex items-center gap-3 mb-3 md:mb-4 pb-3 md:pb-4 border-b">
-                          <Avatar className="h-8 w-8 md:h-10 md:w-10">
+                        <div className="flex items-center gap-3 mb-4 pb-4 border-b">
+                          <Avatar className="h-8 w-8">
                             <AvatarImage src={path.influencer.avatar} />
                             <AvatarFallback>{path.influencer.name[0]}</AvatarFallback>
                           </Avatar>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{path.influencer.name}</p>
-                            <p className="text-xs text-muted-foreground truncate">@{path.influencer.username}</p>
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{path.influencer.name}</p>
+                            <p className="text-xs text-muted-foreground">@{path.influencer.username}</p>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-2 gap-2 text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">
+                        <div className="flex items-center justify-between text-sm text-muted-foreground mb-4">
                           <div className="flex items-center gap-1">
-                            <MapPin className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
-                            <span className="truncate">{path.stops.length} stops</span>
+                            <MapPin className="h-4 w-4" />
+                            <span>{path.stops.length} stops</span>
                           </div>
                           <div className="flex items-center gap-1">
-                            <Navigation className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
-                            <span className="truncate">{path.destination}</span>
+                            <Navigation className="h-4 w-4" />
+                            <span>{path.destination}</span>
                           </div>
                         </div>
 
-                        <div className="flex flex-col md:flex-row gap-2">
+                        <div className="flex gap-2">
                           <Button 
-                            className="flex-1 text-sm"
-                            size="sm"
+                            className="flex-1"
                             onClick={() => handlePlanTrip(path)}
                             style={{ backgroundColor: '#95C11F', color: '#000' }}
                           >
                             <Route className="h-4 w-4 mr-2" />
                             Plan Trip
                           </Button>
-                          
-                          <div className="flex gap-2">
-                            <Button 
-                              variant="outline"
-                              size="sm"
-                              className="flex-1 md:flex-none"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleSharePath(path);
-                              }}
-                            >
-                              <Share2 className="h-4 w-4 md:mr-0" />
-                              <span className="md:hidden ml-2">Share</span>
-                            </Button>
-                            <Button 
-                              variant="destructive"
-                              size="sm"
-                              className="flex-1 md:w-auto"
-                              onClick={async (e) => {
-                                e.stopPropagation();
-                                try {
-                                  const { error } = await supabase
-                                    .from('user_followed_paths')
-                                    .delete()
-                                    .eq('user_id', user?.id)
-                                    .eq('path_id', path.id);
+                          <Button 
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSharePath(path);
+                            }}
+                          >
+                            <Share2 className="h-4 w-4" />
+                          </Button>
+                          <Button 
+                            variant="destructive"
+                            size="icon"
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              try {
+                                const { error } = await supabase
+                                  .from('user_followed_paths')
+                                  .delete()
+                                  .eq('user_id', user?.id)
+                                  .eq('path_id', path.id);
 
-                                  if (error) throw error;
+                                if (error) throw error;
 
-                                  toast({
-                                    title: "Path removed",
-                                    description: "Path has been removed from saved paths",
-                                  });
+                                toast({
+                                  title: "Path removed",
+                                  description: "Path has been removed from saved paths",
+                                });
 
-                                  // Refresh saved paths
-                                  fetchSavedPaths();
-                                } catch (error) {
-                                  console.error('Error removing path:', error);
-                                  toast({
-                                    title: "Error",
-                                    description: "Failed to remove path",
-                                    variant: "destructive",
-                                  });
-                                }
-                              }}
-                            >
-                              <X className="h-4 w-4" />
-                              <span className="md:hidden ml-2">Remove</span>
-                            </Button>
-                          </div>
+                                // Refresh saved paths
+                                fetchSavedPaths();
+                              } catch (error) {
+                                console.error('Error removing path:', error);
+                                toast({
+                                  title: "Error",
+                                  description: "Failed to remove path",
+                                  variant: "destructive",
+                                });
+                              }
+                            }}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
                       </div>
                     </Card>
